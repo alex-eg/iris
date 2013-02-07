@@ -39,9 +39,9 @@ handle_info(#received_packet{packet_type = message, raw_packet = Packet}, State)
     [Config|Session] = State,
     process_message(Session, Config, Packet, []),
     {noreply, State};
-handle_info(_Msg, Library) -> {noreply, Library}.
-terminate(_Reason, _Library) -> ok.
-code_change(_OldVersion, Library, _Extra) -> {ok, Library}.
+handle_info(_Msg, State) -> {noreply, State}.
+terminate(_Reason, _State) -> ok.
+code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
 join_groupchat(XmppSession, Room, Nick) ->
     ulog:info("Joining ~s as ~s", [Room, Nick]),

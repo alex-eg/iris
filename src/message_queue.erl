@@ -3,17 +3,25 @@
 -export([print/1]).
 
 new() ->
-    queue:new().
+    [].
 
 push(Element, Queue) when is_list(Element) ->
-    if queue:length(Queue) <= 20 ->
+    Length = queue:len(Queue),
+    if Length < 20 ->
 	    queue:in(Element, Queue);
-       true ->
-	    Q = queue:out_r(Queue),
+       Length >= 20 ->
+	    {_, Q} = queue:out_r(Queue),
+	    queue:in(Element, Q)
+    end.
 	    
-
 push_back(Element, Queue) when is_list(Element) ->
-    queue:in_r(Element, Queue).
+    Length = queue:len(Queue),
+    if Length < 20 ->
+	    queue:in_r(Element, Queue);
+       Length >= 20 ->
+	    {_, Q} = queue:out(Queue),
+	    queue:in_r(Element, Q)
+    end.
 
 pop(Queue) ->
     queue:out(Queue).

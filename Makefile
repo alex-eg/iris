@@ -13,4 +13,4 @@ compile:
 
 debug: all
 	cd ebin
-	erl -noshell -pa ebin -s bot start
+	erl -noshell -pa ebin -s iris start
