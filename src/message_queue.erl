@@ -6,7 +6,11 @@ new() ->
     queue:new().
 
 push(Element, Queue) when is_list(Element) ->
-    queue:in(Element, Queue).
+    if queue:length(Queue) <= 20 ->
+	    queue:in(Element, Queue);
+       true ->
+	    Q = queue:out_r(Queue),
+	    
 
 push_back(Element, Queue) when is_list(Element) ->
     queue:in_r(Element, Queue).
