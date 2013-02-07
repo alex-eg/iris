@@ -2,6 +2,7 @@ all: clean compile
 
 clean:
 	rm -f src/*~
+	rm -f src/*.beam
 	rm -f *~
 	rm -rf ebin/
 	rm -f *.dump
