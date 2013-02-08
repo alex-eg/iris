@@ -6,18 +6,18 @@ new() ->
     [].
 
 push(Element, Queue) when is_list(Element) ->
-    Length = queue:len(Queue),
+    Length = length(Queue),
     if Length < 20 ->
-	    queue:in(Element, Queue);
+	    [[Element]|Queue];
        Length >= 20 ->
-	    {_, Q} = queue:out_r(Queue),
-	    queue:in(Element, Q)
+	    [H|T] = Queue,
+	    
     end.
 	    
 push_back(Element, Queue) when is_list(Element) ->
-    Length = queue:len(Queue),
+    Length = length(Queue),
     if Length < 20 ->
-	    queue:in_r(Element, Queue);
+	    [Queue|[Element]];
        Length >= 20 ->
 	    {_, Q} = queue:out(Queue),
 	    queue:in_r(Element, Q)

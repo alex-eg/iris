@@ -7,6 +7,7 @@
 	 password,
 	 room,
 	 nick,
+	 status,
 	 timeout = 10000,
 	 modules = []
 	}).

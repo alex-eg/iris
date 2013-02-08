@@ -10,7 +10,7 @@ init(State) ->
     Session = exmpp_session:start(),
     Jid = exmpp_jid:make(Config#bot_info.jid,
 			 Config#bot_info.server_address,
-			 "R15B"),
+			 Config#bot_info.status),
     exmpp_session:auth_basic_digest(Session, Jid, Config#bot_info.password),
     {ok, _StreamID} = exmpp_session:connect_TCP(Session,
 						Config#bot_info.server_address,
@@ -19,7 +19,7 @@ init(State) ->
     exmpp_session:send_packet(Session,
 			      exmpp_presence:set_status(
 				exmpp_presence:available(),
-				"R15B1")
+				Config#bot_info.status)
 			     ),
     gen_server:cast(root, {connected, self()}),
     {ok, [Config|Session]}.
