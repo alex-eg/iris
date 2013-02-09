@@ -22,7 +22,8 @@ init(State) ->
 				Config#bot_info.status)
 			     ),
     gen_server:cast(root, {connected, self()}),
-    {ok, [Config|Session]}.
+    Last = message_queue:new(),
+    {ok, [[Last|Config]|Session]}.
 
 handle_cast({join, Room, Nick}, State) ->
     [_|Session] = State,
@@ -34,12 +35,16 @@ handle_cast({send_packet, Packet}, State) when ?IS_MESSAGE(Packet) ->
     {noreply, State};
 handle_cast(_, State) -> {noreply, State}.
 
-handle_call(_Msg, _Caller, State) -> {noreply, State}.
 handle_info(#received_packet{packet_type = message, raw_packet = Packet}, State) when ?IS_MESSAGE(Packet) ->
-    [Config|Session] = State,
-    process_message(Session, Config, Packet, []),
-    {noreply, State};
+    [[LastMessages|Config]|Session] = State,
+    process_message(Session, Config, Packet, LastMessages),
+    PacketBody = exmpp_message:get_body(Packet),
+    PacketBodyText = format_str("~s", [PacketBody]),
+    NewLastMessages = message_queue:push(PacketBodyText, LastMessages),
+    {noreply, [[NewLastMessages|Config]|Session]};
 handle_info(_Msg, State) -> {noreply, State}.
+
+handle_call(_Msg, _Caller, State) -> {noreply, State}.
 terminate(_Reason, _State) -> ok.
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
@@ -65,7 +70,7 @@ respond_to_message(groupchat, Packet, Config, LastMessages) ->
 	{match, _} ->
 	    Modules = Config#bot_info.modules,
 	    lists:foreach(fun(Module) ->
-				  Response = Module:respond_to_message(Body, LastMessages),
+				  Response = Module:respond_to_message(Text, LastMessages),
 				  [Room, Nick] = string:tokens(format_str("~s",[From]),"/"),
 				  ResponseBody = Nick ++ ", " ++ Response,
 				  NewTo = list_to_binary(Room),
@@ -83,4 +88,4 @@ respond_to_message(_, _, _, _) ->
     ok.
 
 format_str(Format, Data) ->
-    erlang:binary_to_list(erlang:iolist_to_binary(io_lib:format(Format, Data))).
+    lists:flatten(io_lib:format(Format, Data)).
