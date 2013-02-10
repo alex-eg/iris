@@ -37,7 +37,7 @@ handle_cast(_, State) -> {noreply, State}.
 
 handle_info(#received_packet{packet_type = message, raw_packet = Packet}, State) when ?IS_MESSAGE(Packet) ->
     [[LastMessages|Config]|Session] = State,
-    process_message(Session, Config, Packet, LastMessages),
+    process_message(Config, Packet, LastMessages),
     PacketBody = exmpp_message:get_body(Packet),
     PacketBodyText = format_str("~s", [PacketBody]),
     NewLastMessages = message_queue:push(PacketBodyText, LastMessages),
@@ -55,37 +55,45 @@ join_groupchat(XmppSession, Room, Nick) ->
                            #xmlel{name = x, attrs = [#xmlattr{name = <<"xmlns">>, value = ?NS_MUC_b}]
                                  }
 				     ),
-    exmpp_session:send_packet(XmppSession, BasePresence).
+    exmpp_session:send_packet(XmppSession, Presence).
 
-process_message(Session, Config, Packet, LastMessages) ->
+process_message(Config, Packet, LastMessages) ->
     Type =  exmpp_message:get_type(Packet),
     respond_to_message(Type, Packet, Config, LastMessages).
 
 respond_to_message(groupchat, Packet, Config, LastMessages) ->
     From = exmpp_xml:get_attribute(Packet, <<"from">>, undefined),
-    To = exmpp_xml:get_attribute(Packet, <<"to">>, undefined),
     Body = exmpp_message:get_body(Packet),
     Text = format_str("~s", [Body]),
-    case re:run(Text, "^@.*$") of
-	{match, _} ->
+    case re:run(Text, "^@(d\\w.*?) (.*)$", [unicode]) of
+	{match, Capture} ->
+	    {ModuleName, Argument} = extract_info(Capture, Text),
 	    Modules = Config#bot_info.modules,
-	    lists:foreach(fun(Module) ->
-				  Response = Module:respond_to_message(Text, LastMessages),
-				  [Room, Nick] = string:tokens(format_str("~s",[From]),"/"),
-				  ResponseBody = Nick ++ ", " ++ Response,
-				  NewTo = list_to_binary(Room),
-				  NewFrom = format_str("~s", [Config#bot_info.jid ++ "@" ++ Config#bot_info.server_address]),
-				  P1 = exmpp_message:make_groupchat(?NS_JABBER_CLIENT, ResponseBody),
-				  P2 = exmpp_xml:set_attribute(P1, <<"from">>, NewFrom),
-				  P3 = exmpp_xml:set_attribute(P2, <<"to">>, NewTo),
-				  gen_server:cast(worker, {send_packet, P3})
-			  end,
-			  Modules);
+	    Module = list_to_atom(ModuleName),
+	    IsMember = lists:member(Module, Modules),
+	    if IsMember -> 
+		    Response = Module:respond_to_message(Argument, LastMessages),
+		    [Room, Nick] = string:tokens(format_str("~s",[From]),"/"),
+		    ResponseBody = Nick ++ ", " ++ Response,
+		    NewTo = list_to_binary(Room),
+		    NewFrom = format_str("~s", [Config#bot_info.jid ++ 
+						    "@" ++ 
+						    Config#bot_info.server_address]),
+		    P1 = exmpp_message:make_groupchat(?NS_JABBER_CLIENT, ResponseBody),
+		    P2 = exmpp_xml:set_attribute(P1, <<"from">>, NewFrom),
+		    P3 = exmpp_xml:set_attribute(P2, <<"to">>, NewTo),
+		    gen_server:cast(worker, {send_packet, P3});
+	       true -> ok
+	    end;
 	_ -> ok
     end;
-
 respond_to_message(_, _, _, _) ->
     ok.
 
 format_str(Format, Data) ->
     lists:flatten(io_lib:format(Format, Data)).
+
+extract_info([_, {ModuleStart, ModuleLength}, {ArgStart, ArgLength}], Text) ->
+    Module = lists:sublist(Text, ModuleStart + 1, ModuleLength),
+    Argument = lists:sublist(Text, ArgStart + 1, ArgLength),
+    {Module, Argument}.
