@@ -8,7 +8,7 @@ start() ->
     application:start(exmpp),
     config:init("cfg.erl"),
     ConfigRecord = create_config_record(),
-    gen_server:start_link({local, root}, ?MODULE, ConfigRecord, []).
+    gen_server:start({local, root}, ?MODULE, ConfigRecord, []).
 
 init(State) ->
     ulog:info("Supervisor process started and has PID ~p", [self()]),
@@ -19,7 +19,7 @@ init(State) ->
 handle_cast({connected, From}, State) ->
     ulog:info("Worker ~p has connected", [From]),
     {noreply, State};
-handle_cast({respawn, From}, State) ->
+handle_cast({respawn, _From}, State) ->
     ulog:info("Respawning worker", []),
     start_worker(State),
     {noreply, State};
@@ -28,9 +28,9 @@ handle_cast(Any, State) ->
     {noreply, State}.
  
 handle_call(_Msg, _Caller, State) -> {noreply, State}.
-handle_info(_Msg, Library) -> {noreply, Library}.
-terminate(_Reason, _Library) -> ok.
-code_change(_OldVersion, Library, _Extra) -> {ok, Library}.
+handle_info(_Msg, State) -> {noreply, State}.
+terminate(_Reason, _State) -> ok.
+code_change(_OldVersion, State, _Extra) -> {ok, State}.
    
 create_config_record() ->
     #bot_info {
