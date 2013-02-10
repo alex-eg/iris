@@ -65,7 +65,7 @@ respond_to_message(groupchat, Packet, Config, LastMessages) ->
     From = exmpp_xml:get_attribute(Packet, <<"from">>, undefined),
     Body = exmpp_message:get_body(Packet),
     Text = format_str("~s", [Body]),
-    case re:run(Text, "^@(d\\w.*?) (.*)$", [unicode]) of
+    case re:run(Text, "^@(\\w.*?) (.*)$", [unicode]) of
 	{match, Capture} ->
 	    {ModuleName, Argument} = extract_info(Capture, Text),
 	    Modules = Config#bot_info.modules,

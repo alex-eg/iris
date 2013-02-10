@@ -12,4 +12,21 @@
 	 modules = []
 	}).
 
+-record(connection_info,
+	{port = 5222,
+	 jid,
+	 password,
+	 status,
+	 resource,
+	 modules = []
+	 }).
+
+-record(room_info,
+	{jid,
+	 password = none,
+	 nick,
+	 modules = []
+	 }).
+
+
 -define(EMPTY_PRESENCE, #xmlel{name = 'presence'}).

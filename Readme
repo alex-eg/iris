@@ -1,1 +1,4 @@
 Gen_server-complaint exmpp-based jabber bot, very stupid so far.
+Credits:
+* Process One - exmpp
+* tonyg - erlang-rfc4627
