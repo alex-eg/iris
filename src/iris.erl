@@ -1,14 +1,18 @@
 -module(iris).
 -behavior(supervisor).
--export([start/0]).
+-behavior(application).
+-export([start/2, stop/1]).
 -export([init/1]).
 
 -include("xmpp.hrl").
 
-start() ->
+start(_StartType, _StartArgs) ->
     supervisor:start({local, supervisor}, ?MODULE, [], []).
 
-init(_Args) ->
+stop(_State) ->
+    ok.
+
+init(Args) ->
     ulog:info("Main process and supervisor started and has PID ~p", [self()]),
     {ok, 
      {{one_for_one, 1, 60},
