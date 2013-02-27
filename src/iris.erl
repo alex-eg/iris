@@ -18,5 +18,7 @@ init(Args) ->
      {{one_for_one, 1, 60},
       [{root,
 	{root, start, []},
-	permanent, brutal_kill, supervisor, [root]},
-      }}.
+	permanent, brutal_kill, supervisor, [root]}
+      ]
+     }
+    }.

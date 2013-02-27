@@ -1,3 +1,6 @@
+NAME = root
+ENTRY = start
+
 all: clean compile
 
 clean:
@@ -15,4 +18,4 @@ compile:
 
 debug: all
 	cd ebin
-	erl -noshell -pa ebin -s iris start
+	erl -noshell -pa ebin -s $(NAME) $(ENTRY)
