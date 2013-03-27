@@ -45,21 +45,20 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
    
 create_config_record() ->
     #jid_info {
-       server_address = config:get(server),
        jid = config:get(jid),
-       password = config:get(password),
-       room = config:get(room),
-       nick = config:get(nick),
        resource = config:get(resource),
        status = config:get(status),
-       timeout = config:get(timeout),
+       password = config:get(password),
+       rooms = config:get(rooms),
        modules = config:get(modules)
       }.
 
 start_worker(Config) ->
-    ulog:info("Starting worker on server ~p for jid ~p with supervisor ~p", [Config#jid_info.server_address, Config#jid_info.jid, self()]),
-    gen_server:start_link({local, worker}, worker, Config, []),
-    enter_rooms().
+    ulog:info("Starting worker for jid ~p with supervisor ~p", 
+	      [Config#jid_info.jid,
+	       self()
+	      ]),
+    gen_server:start_link({local, worker}, worker, Config, []).
     
 enter_rooms() ->
     Room = config:get(room),

@@ -8,12 +8,13 @@
 init(State) ->
     Config = State,
     Session = exmpp_session:start(),
-    Jid = exmpp_jid:make(Config#jid_info.jid,
-			 Config#jid_info.server_address,
+    [Name, Server] = string:tokens(Config#jid_info.jid, "@"),
+    Jid = exmpp_jid:make(Name,
+			 Server,
 			 Config#jid_info.resource),
     exmpp_session:auth_basic_digest(Session, Jid, Config#jid_info.password),
     {ok, _StreamID} = exmpp_session:connect_TCP(Session,
-						Config#jid_info.server_address,
+						Server,
 						Config#jid_info.port),
     exmpp_session:login(Session),
     exmpp_session:send_packet(Session,
@@ -49,16 +50,6 @@ handle_call(_Msg, _Caller, State) -> {noreply, State}.
 terminate(_Reason, _State) -> ok.
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
-join_groupchat(XmppSession, Room, Nick) ->
-    ulog:info("Joining ~s as ~s", [Room, Nick]),
-    %% Fixme: self-defined marco and manual stanza creation is definetly NOT a good practice
-    BasePresence = exmpp_xml:set_attribute(?EMPTY_PRESENCE, <<"to">>, list_to_binary(Room ++ "/" ++ Nick)),
-    Presence = exmpp_xml:append_child(BasePresence,
-				      #xmlel{name = x, attrs = [#xmlattr{name = <<"xmlns">>, value = ?NS_MUC_b}]
-					    }
-				     ),
-    exmpp_session:send_packet(XmppSession, Presence).
-
 process_message(Config, Packet) ->
     Type =  exmpp_message:get_type(Packet),
     respond_to_message(Type, Packet, Config).
@@ -78,9 +69,7 @@ respond_to_message(groupchat, Packet, Config) ->
 		    [Room, Nick] = string:tokens(format_str("~s",[From]),"/"),
 		    ResponseBody = Nick ++ ", " ++ Response,
 		    NewTo = list_to_binary(Room),
-		    NewFrom = format_str("~s", [Config#jid_info.jid ++ 
-						    "@" ++ 
-						    Config#jid_info.server_address]),
+		    NewFrom = format_str("~s", [Config#jid_info.jid]),
 		    P1 = exmpp_message:make_groupchat(?NS_JABBER_CLIENT, ResponseBody),
 		    P2 = exmpp_xml:set_attribute(P1, <<"from">>, NewFrom),
 		    P3 = exmpp_xml:set_attribute(P2, <<"to">>, NewTo),
