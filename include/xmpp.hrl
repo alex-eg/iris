@@ -1,15 +1,17 @@
 -include_lib("exmpp/include/exmpp.hrl").
 
--record(bot_info,
+-record(jid_info,
 	{port = 5222,
 	 server_address,
 	 jid,
 	 password,
 	 room,
 	 nick,
+	 resource,
 	 status,
 	 timeout = 10000,
-	 modules = []
+	 modules = [],
+	 roster = []
 	}).
 
 -record(connection_info,
@@ -17,16 +19,15 @@
 	 jid,
 	 password,
 	 status,
-	 resource,
 	 modules = []
-	 }).
+	}).
 
 -record(room_info,
 	{jid,
 	 password = none,
 	 nick,
 	 modules = []
-	 }).
+	}).
 
 
 -define(EMPTY_PRESENCE, #xmlel{name = 'presence'}).
