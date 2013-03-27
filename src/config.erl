@@ -8,13 +8,16 @@ get(Id) ->
 init(Filename) ->
     ets:new(bot_config, [named_table]),
     {ok, [{config, Config}]} = file:consult(Filename),
-    store(Config),
+    store(Config, bot_config),
     ulog:info("Read configuration file ~s", [Filename]).
 
-store([]) ->
+init_jid_config(Filename) ->
+    
+
+store([], TableName) ->
     ok;
-store([H|T]) ->
+store([H|T], TableName) ->
     {Id, Value} = H,
-    ets:insert(bot_config, {Id, Value}),
-    store(T).
+    ets:insert(TableName, {Id, Value}),
+    store(T, TableName).
     
