@@ -31,8 +31,8 @@ handle_cast(Any, State) ->
  
 handle_info({'EXIT', From, Reason}, State) ->
     ulog:info("Worker ~p exited. Reason: ~p. Restarting in ~pms.",
-	      [From, Reason, State#bot_info.timeout]),
-    timer:apply_after(State#bot_info.timeout, ?MODULE,
+	      [From, Reason, State#jid_info.timeout]),
+    timer:apply_after(State#jid_info.timeout, ?MODULE,
 		     fun() ->
 			     gen_server:cast({respawn, self()})
 		     end, []),
@@ -44,18 +44,20 @@ terminate(_Reason, _State) -> ok.
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
    
 create_config_record() ->
-    #bot_info {
+    #jid_info {
        server_address = config:get(server),
        jid = config:get(jid),
        password = config:get(password),
        room = config:get(room),
-       timeout = config:get(timeout),
        nick = config:get(nick),
+       resource = config:get(resource),
+       status = config:get(status),
+       timeout = config:get(timeout),
        modules = config:get(modules)
       }.
 
 start_worker(Config) ->
-    ulog:info("Starting worker on server ~p for jid ~p with supervisor ~p", [Config#bot_info.server_address, Config#bot_info.jid, self()]),
+    ulog:info("Starting worker on server ~p for jid ~p with supervisor ~p", [Config#jid_info.server_address, Config#jid_info.jid, self()]),
     gen_server:start_link({local, worker}, worker, Config, []),
     enter_rooms().
     
