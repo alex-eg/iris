@@ -7,8 +7,7 @@
 
 start() ->
     application:start(exmpp),
-    config:init("cfg.erl"),
-    ConfigRecord = create_config_record(),
+    ConfigRecord = config:init("cfg.erl"),
     gen_server:start_link({local, root}, ?MODULE, ConfigRecord, []).
 
 init(State) ->
@@ -19,7 +18,8 @@ init(State) ->
     {ok, State}.
 
 handle_cast({connected, From}, State) ->
-    ulog:info("Worker ~p has connected", [From]),
+    ulog:info("Worker ~p has connected, now entering rooms...~n", [From]),
+    gen_server:cast(From, join_rooms),
     {noreply, State};
 handle_cast({respawn, _From}, State) ->
     ulog:info("Respawning worker", []),
@@ -31,11 +31,11 @@ handle_cast(Any, State) ->
  
 handle_info({'EXIT', From, Reason}, State) ->
     ulog:info("Worker ~p exited. Reason: ~p. Restarting in ~pms.",
-	      [From, Reason, State#jid_info.timeout]),
-    timer:apply_after(State#jid_info.timeout, ?MODULE,
-		     fun() ->
-			     gen_server:cast({respawn, self()})
-		     end, []),
+	      [From, Reason, ?RESTART_TIMEOUT]),
+    timer:apply_after(?RESTART_TIMEOUT, 
+		      ?MODULE,
+		      gen_server:cast(),
+		      [{respawn, self()}]),
     {noreply, State};
 handle_info(_Msg, State) -> {noreply, State}.
 
@@ -43,26 +43,14 @@ handle_call(_Msg, _Caller, State) -> {noreply, State}.
 terminate(_Reason, _State) -> ok.
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
    
-create_config_record() ->
-    #jid_info {
-       jid = config:get(jid),
-       resource = config:get(resource),
-       status = config:get(status),
-       password = config:get(password),
-       rooms = config:get(rooms),
-       modules = config:get(modules)
-      }.
-
 start_worker(Config) ->
     ulog:info("Starting worker for jid ~p with supervisor ~p", 
 	      [Config#jid_info.jid,
 	       self()
 	      ]),
-    gen_server:start_link({local, worker}, worker, Config, []).
-    
-enter_rooms() ->
-    Room = config:get(room),
-    RoomJid = Room ++ "@conference." ++ config:get(server),
-    Nick = config:get(nick),
-    gen_server:cast(worker, {join, RoomJid, Nick}).
+    Name = list_to_atom(Config#jid_info.jid),
+    {ok, Pid} = gen_server:start_link({local, Name}, worker, Config, []),
+    ets:insert(workers, {Pid, Name}).
 
+%restart_worker(Pid) ->
+ %   ulog:info("Restarting worker for jid ~p~n
