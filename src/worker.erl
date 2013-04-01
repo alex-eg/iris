@@ -25,9 +25,16 @@ init(State) ->
     gen_server:cast(root, {connected, self()}),
     {ok, [Config|Session]}.
 
-handle_cast({join, Room, Nick}, State) ->
-    [_|Session] = State,
-    join_groupchat(Session, Room, Nick),
+handle_cast(join_rooms, State) ->
+    [Config|Session] = State,
+    RoomList = config:get_room_list(Config),
+    %% Need a closure here, because foreach accepts only one argument functions
+    ulog:debug("Acquired room list:~p~n", [RoomList]),
+    JoinLambda = fun(RoomTuple) ->
+			 muc_tools:join_groupchat(Session, RoomTuple)
+		 end,
+    lists:foreach(JoinLambda,
+		  RoomList),
     {noreply, State};
 handle_cast({send_packet, Packet}, State) when ?IS_MESSAGE(Packet) ->
     [_|Session] = State,

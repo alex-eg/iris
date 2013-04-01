@@ -11,3 +11,4 @@
 	}).
 
 -define(EMPTY_PRESENCE, #xmlel{name = 'presence'}).
+-define(RESTART_TIMEOUT, 5000).
