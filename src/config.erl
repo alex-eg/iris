@@ -7,7 +7,7 @@
 init(Filename) ->
     {ok, [{jid_config, Config}]} = file:consult(Filename),
     {value, {jid, Jid}} = lists:keysearch(jid, 1, Config),
-    %% Debug only!
+    %% Debug only
     %% {value, {resource, Resource}} = lists:keysearch(resource, 1, Config),
     {_, Resource} = init:script_id(),
     {value, {status, Status}} = lists:keysearch(status, 1, Config),

@@ -27,13 +27,13 @@ create_presence(Room, Nick, Password) ->
     BasePresence = exmpp_xml:set_attribute(?EMPTY_PRESENCE,
 					   <<"to">>,
 					   list_to_binary(Room ++ "/" ++ Nick)),
-    Children = #xmlel{name = password,
+    PasswordElement = #xmlel{name = password,
 		      children = [#xmlcdata{cdata = Password}]},
     Presence = exmpp_xml:append_child(BasePresence,
 				      #xmlel{name = x, 
 					     attrs = [#xmlattr{name = <<"xmlns">>, 
 							       value = ?NS_MUC_b}],
-					     children = [Children]
+					     children = [PasswordElement]
 					    }
 				     ).
     
