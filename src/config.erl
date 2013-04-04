@@ -1,11 +1,16 @@
 -module(config).
--export([init/1, get_room_list/1]).
+-export([init/1, get_room_list/1, parse/1]).
 
 -include_lib("exmpp/include/exmpp_client.hrl").
 -include("xmpp.hrl").
 
 init(Filename) ->
-    {ok, [{jid_config, Config}]} = file:consult(Filename),
+    {ok, [ConfigList]} = file:consult(Filename),
+    ulog:info("Read configuration file ~s", [Filename]),
+    ConfigList.
+
+parse(ConfigEntry) ->
+    {jid_config, Config} = ConfigEntry,
     {value, {jid, Jid}} = lists:keysearch(jid, 1, Config),
     %% Debug only
     %% {value, {resource, Resource}} = lists:keysearch(resource, 1, Config),
@@ -14,7 +19,6 @@ init(Filename) ->
     {value, {password, Password}} = lists:keysearch(password, 1, Config),
     {value, {rooms, Rooms}} = lists:keysearch(rooms, 1, Config),
     {value, {modules, Modules}} = lists:keysearch(modules, 1, Config),
-    ulog:info("Read configuration file ~s", [Filename]),
     #jid_info {
        jid = Jid,
        resource = Resource,

@@ -6,13 +6,17 @@
 
 start() ->
     application:start(exmpp),
-    ConfigRecord = config:init("cfg.erl"),
-    gen_server:start_link({local, root}, ?MODULE, ConfigRecord, []).
+    ConfigList = config:init("cfg.erl"),
+    gen_server:start_link({local, root}, ?MODULE, ConfigList, []).
 
 init(State) ->
-    ulog:info("Supervisor process started and has PID ~p", [self()]),
+    ulog:info("Main process started and has PID ~p", [self()]),
     ets:new(workers, [named_table, bag]),
-    start_worker(State),
+    lists:foreach(fun(ConfigEntry) ->
+			  ConfigRecord = config:parse(ConfigEntry),
+			  start_worker(ConfigRecord)
+		  end,
+		  State),
     {ok, State}.
 
 handle_cast({connected, From}, State) ->
