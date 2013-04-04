@@ -1,6 +1,5 @@
 -module(root).
 -behavior(gen_server).
--behavior(supervisor).
 -export([start/0]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 -include("xmpp.hrl").
@@ -14,7 +13,6 @@ init(State) ->
     ulog:info("Supervisor process started and has PID ~p", [self()]),
     ets:new(workers, [named_table, bag]),
     start_worker(State),
-    process_flag(trap_exit, true),
     {ok, State}.
 
 handle_cast({connected, From}, State) ->

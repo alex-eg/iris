@@ -1,5 +1,5 @@
 -module(default_module).
--export([respond_to_message/2]).
+-export([run/1]).
 
 run(_ArgumentString) ->
     ok.

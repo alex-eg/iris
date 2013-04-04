@@ -12,7 +12,7 @@ start(_StartType, _StartArgs) ->
 stop(_State) ->
     ok.
 
-init(Args) ->
+init(_Args) ->
     ulog:info("Main process and supervisor started and has PID ~p", [self()]),
     {ok, 
      {{one_for_one, 1, 60},
