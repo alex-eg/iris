@@ -12,5 +12,5 @@
 
 -define(EMPTY_PRESENCE, #xmlel{name = 'presence'}).
 -define(RESTART_TIMEOUT, 5000). %% time in miliseconds
--define(REJOIN_TIMEOUT, 20000). 
+-define(REJOIN_TIMEOUT, 30000). 
 -define(COMMAND_PREFIX, "!").
