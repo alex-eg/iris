@@ -1,5 +1,5 @@
 -module(muc_tools).
--export([join_groupchat/2]).
+-export([join_groupchat/2, send_muc_keepalive/2]).
 
 -include_lib("exmpp/include/exmpp_client.hrl").
 -include("xmpp.hrl").
@@ -7,6 +7,12 @@
 join_groupchat(Session, RoomTuple) ->
     {Room, Nick, Password} = RoomTuple,
     ulog:info("Joining ~s as ~s", [Room, Nick]),
+    Presence = create_presence(Room, Nick, Password),
+    exmpp_session:send_packet(Session, Presence).
+
+send_muc_keepalive(Session, RoomTuple) ->
+    {Room, Nick, Password} = RoomTuple,
+    ulog:debug("Processing muc keepalive for room ~s", [Room]),
     Presence = create_presence(Room, Nick, Password),
     exmpp_session:send_packet(Session, Presence).
     

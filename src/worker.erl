@@ -35,6 +35,21 @@ handle_cast(join_rooms, State) ->
 		 end,
     lists:foreach(JoinLambda,
 		  RoomList),
+    gen_server:cast(self(), send_muc_keepalive),
+    {noreply, State};
+handle_cast(send_muc_keepalive, State) ->
+    [Config|Session] = State,
+    RoomList = config:get_room_list(Config),
+    Lambda = fun(RoomTuple) ->
+		     muc_tools:send_muc_keepalive(Session, RoomTuple)
+	     end,
+    lists:foreach(Lambda,
+		  RoomList),
+    timer:apply_after(?REJOIN_TIMEOUT,
+		      gen_server,
+		      cast,
+		      [self(), send_muc_keepalive]
+		     ),
     {noreply, State};
 handle_cast({send_packet, Packet}, State) when ?IS_MESSAGE(Packet) ->
     [_|Session] = State,

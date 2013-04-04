@@ -12,3 +12,4 @@
 
 -define(EMPTY_PRESENCE, #xmlel{name = 'presence'}).
 -define(RESTART_TIMEOUT, 5000).
+-define(REJOIN_TIMEOUT, 10000).
