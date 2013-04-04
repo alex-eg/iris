@@ -57,24 +57,43 @@ handle_cast({send_packet, Packet}, State) when ?IS_MESSAGE(Packet) ->
     {noreply, State};
 handle_cast(_, State) -> {noreply, State}.
 
+%% XMPP packages are handled via handle_info for some reason
+
 handle_info(_Msg = #received_packet{packet_type = message, raw_packet = Packet}, State) ->
-    ulog:debug("Recieved message of type MESSAGE: ~p~n", [_Msg]),
-    [Config|Session] = State,
-    process_message(Config, Packet),
-    PacketBody = exmpp_message:get_body(Packet),
-    PacketBodyText = format_str("~s", [PacketBody]),
-    {noreply, [Config|Session]};
+%    ulog:debug("Recieved message of type MESSAGE: ~p~n", [_Msg]),
+    Type = exmpp_message:get_type(Packet), %% <- returns 'chat' or 'groupchat'
+    %% Here starts actual messages' long journey through modules
+    process_message(Type, Packet, State),
+    {noreply, State};
+handle_info(_Msg = #received_packet{packet_type = iq}, State) ->
+    ulog:debug("Recieved message of type IQ: ~p~n", [_Msg]),
+    {noreply, State};
+handle_info(_Msg = #received_packet{packet_type = presence}, State) ->
+%    ulog:debug("Recieved message of type PRESENCE: ~p~n", [_Msg]),
+    {noreply, State};
 handle_info(_Msg, State) -> 
-    ulog:debug("Recieved message: ~p~n", [_Msg]),
+    ulog:debug("Recieved UNKNOWN message: ~p~n", [_Msg]),
     {noreply, State}.
 
 handle_call(_Msg, _Caller, State) -> {noreply, State}.
 terminate(_Reason, _State) -> ok.
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
-process_message(Config, Packet) ->
-    Type =  exmpp_message:get_type(Packet),
-    respond_to_message(Type, Packet, Config).
+%% gen_server callbacks end
+
+process_message(chat, Packet, State) ->
+    %% FUTURE: add ignore list to forbid unwanted individuals calling modules
+    process_message(groupchat, Packet, State);
+process_message(groupchat, Packet, State) ->
+    ulog:debug("Packet is: ~n~p~n", [Packet]),
+    Stamp = exmpp_xml:get_element(Packet, delay),
+    process_groupchat(Stamp, Packet, State).
+
+process_groupchat(undefined, Packet, State) ->
+    ulog:debug("Timestamp is missing, processing message..."),
+    ok;
+process_groupchat(_Stamp, Packet, State) ->
+    ulog:debug("Message has a timestamp, ignoring message").
 
 respond_to_message(groupchat, Packet, Config) ->
     From = exmpp_xml:get_attribute(Packet, <<"from">>, undefined),
