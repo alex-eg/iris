@@ -17,18 +17,18 @@ stop(_State) ->
     ok.
 
 start_shortcut() ->
-%    appmon:start(),
     ulog:info("Invoked shortcut start, pid is ~p", [self()]),
-    {ok, Pid} = supervisor:start_link({local, main_sup}, ?MODULE, []).
-     
+    {ok, Pid} = supervisor:start_link({local, main_sup}, ?MODULE, []),
+    erlang:unlink(Pid).
+
 init(_Args) ->
     {ok, 
      {
        {one_for_one, 5, 60},
        [{root,
-	 {root, start, [self()]},
-	 permanent, 
-	 brutal_kill,
+	 {root, start_link, [self()]},
+	 transient, 
+	 10000,
 	 worker,
 	 [root]}]
      }

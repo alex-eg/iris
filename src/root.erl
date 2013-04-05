@@ -1,14 +1,14 @@
 -module(root).
 -behavior(gen_server).
--export([start/1]).
+-export([start_link/1]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 -include("xmpp.hrl").
 
-start(SupRef) ->
-    application:start(exmpp),
+start_link(SupRef) ->
     gen_server:start_link({local, root}, ?MODULE, SupRef, []).
 
 init(ParentPid) ->
+    application:start(exmpp),
     ulog:info("Root node started and has PID ~p, parent process is ~p", [self(), ParentPid]),
     ConfigList = config:init("cfg.erl"),
     ets:new(workers, [named_table, bag]),
@@ -24,13 +24,8 @@ handle_cast(Any, State) ->
     {noreply, State}.
 
 handle_info(start_children, State) ->
-%%    ulog:info("Starting!! children state is ~p", [State]),
+    ulog:info("Starting children, state is ~p", [State]),
     {Supervisor, ConfigList} = State,
-    %% ulog:debug("Config list is ~p", [ConfigList]),
-    %% ulog:debug("Config dist is ~p", [ConfigList]),
-    %% ulog:debug("Config fist is ~p", [ConfigList]),
-    %% ulog:debug("Config gist is ~p", [ConfigList]),
-    %% ulog:debug("Config jist is ~p", [ConfigList]),
     lists:foreach(fun(ConfigEntry) ->
 			  ulog:debug("Parsing config entry"),
 			  ConfigRecord = config:parse(ConfigEntry),
@@ -39,8 +34,9 @@ handle_info(start_children, State) ->
 		  end,
 		  ConfigList),
     {noreply, State};
- 
-handle_info(_Msg, State) -> {noreply, State}.
+handle_info(_Msg, State) -> 
+    ulog:info("Recieved UNKNOWN message: ~p~n", [_Msg]),
+    {noreply, State}.
 
 handle_call(_Msg, _Caller, State) -> {noreply, State}.
 terminate(_Reason, _State) -> ok.
@@ -56,10 +52,11 @@ start_worker(Config, SupRef) ->
 	      ]),
     {ok, Pid} = supervisor:start_child(SupRef,
 				       {Name,
-					{jid_worker, start, [Config, Name]},
-					permanent,
-					brutal_kill,
+					{jid_worker, start_link, [Config, Name]},
+					transient,
+					5000,
 					worker,
 					[jid_worker]}),
-    ulog:debug("Worker started with pid ~p", [Pid]),
+    ulog:debug("Worker started with pid ~p, entering rooms", [Pid]),
+    gen_server:cast(Pid, join_rooms),
     ets:insert(workers, {Pid, Name}).
