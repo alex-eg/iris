@@ -16,12 +16,14 @@ debug(Format, Args) ->
 debug(Args) ->
     io:format("[~w] ~ts~n",[dbg,Args]).
 
-
-info(Record) ->
+info_record(Record) ->
     out(inf, "~p", [Record]).
 
 info(Format, Args) ->
     out(inf, Format, Args).
+
+info(Args) ->
+    io:format("[~w] ~ts~n",[inf,Args]).
 
 warning(Record) ->
     out(wrn, "~p", [Record]).

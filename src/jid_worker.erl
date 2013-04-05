@@ -1,4 +1,4 @@
--module(worker).
+-module(jid_worker).
 -export([start/2]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
@@ -7,29 +7,12 @@
 -behavior(gen_server).
 
 start(Config, Name) ->
-    ulog:debug("Inside worker, starting..."),
     gen_server:start_link({local, Name}, ?MODULE, Config, []).
 
 init(State) ->
-    Config = State,
-    Session = exmpp_session:start(),
-    [Name, Server] = string:tokens(Config#jid_info.jid, "@"),
-    Jid = exmpp_jid:make(Name,
-			 Server,
-			 Config#jid_info.resource),
-    exmpp_session:auth_basic_digest(Session, Jid, Config#jid_info.password),
-    {ok, _StreamID} = exmpp_session:connect_TCP(Session,
-						Server,
-						Config#jid_info.port),
-    exmpp_session:login(Session),
-    exmpp_session:send_packet(Session,
-			      exmpp_presence:set_status(
-				exmpp_presence:available(),
-				Config#jid_info.status)
-			     ),
-    gen_server:cast(root, {connected, self()}),
-    {ok, {Config, Session}}.
-
+    self() ! connect_server,
+    {ok, State}.
+    
 handle_cast(join_rooms, State) ->
     {Config, Session} = State,
     RoomList = config:get_room_list(Config),
@@ -62,8 +45,26 @@ handle_cast({send_packet, Packet}, State) ->
     {noreply, State};
 handle_cast(_, State) -> {noreply, State}.
 
+handle_info(connect_server, State) ->
+    Config = State,
+    Session = exmpp_session:start(),
+    [Name, Server] = string:tokens(Config#jid_info.jid, "@"),
+    Jid = exmpp_jid:make(Name,
+			 Server,
+			 Config#jid_info.resource),
+    exmpp_session:auth_basic_digest(Session, Jid, Config#jid_info.password),
+    {ok, _StreamID} = exmpp_session:connect_TCP(Session,
+						Server,
+						Config#jid_info.port),
+    exmpp_session:login(Session),
+    exmpp_session:send_packet(Session,
+			      exmpp_presence:set_status(
+				exmpp_presence:available(),
+				Config#jid_info.status)
+			     ),
+    gen_server:cast(root, {connected, self()}),
+    {noreply, {Config, Session}};
 %% XMPP packages are handled via handle_info for some reason
-
 handle_info(_Msg = #received_packet{packet_type = message, raw_packet = Packet}, State) ->
     Type = exmpp_message:get_type(Packet), %% <- returns 'chat' or 'groupchat'
     %% Here starts actual messages' long journey through modules

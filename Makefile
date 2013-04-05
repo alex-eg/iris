@@ -1,5 +1,5 @@
-NAME = root
-ENTRY = start
+NAME = iris
+ENTRY = start_shortcut
 
 all: clean compile
 
@@ -19,3 +19,7 @@ compile:
 debug: all
 	cd ebin
 	erl -noshell -pa ebin -s $(NAME) $(ENTRY)
+
+debug_sasl: all
+	cd ebin
+	erl -pa ebin -boot start_sasl -s $(NAME) $(ENTRY)
