@@ -7,20 +7,22 @@
 
 -include("xmpp.hrl").
 
-start(_StartType, _StartArgs) ->
-    ulog:info("------====== IRIS starting ======------"),
-    {ok, Pid} = supervisor:start_link({local, supervisor}, ?MODULE, []),
-    erlang:unlink(Pid),
-    ulog:debug("Unlinked supervisor").
-
-stop(_State) ->
-    ok.
-
+%% Cheater's shortcut
 start_shortcut() ->
     ulog:info("Invoked shortcut start, pid is ~p", [self()]),
     {ok, Pid} = supervisor:start_link({local, main_sup}, ?MODULE, []),
     erlang:unlink(Pid).
 
+%% Application behavior callbacks
+start(_StartType, _StartArgs) ->
+    ulog:info("------====== IRIS starting ======------"),
+    {ok, Pid} = supervisor:start_link({local, supervisor}, ?MODULE, []),
+    erlang:unlink(Pid).
+
+stop(_State) ->
+    ok.
+
+%% Supervisor behavior callback
 init(_Args) ->
     {ok, 
      {

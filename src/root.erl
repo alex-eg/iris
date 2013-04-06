@@ -16,7 +16,8 @@ init(ParentPid) ->
     {ok, {ParentPid, ConfigList}}.
 
 handle_cast({connected, From}, State) ->
-    ulog:info("Worker ~p has connected, now entering rooms...~n", [From]),
+    [{_, Name}] = ets:lookup(workers, From),
+    ulog:info("Worker ~p has connected with pid ~p, now entering rooms...~n", [Name, From]),
     gen_server:cast(From, join_rooms),
     {noreply, State};
 handle_cast(Any, State) ->
@@ -24,12 +25,10 @@ handle_cast(Any, State) ->
     {noreply, State}.
 
 handle_info(start_children, State) ->
-    ulog:info("Starting children, state is ~p", [State]),
+    ulog:info("Starting children"),
     {Supervisor, ConfigList} = State,
     lists:foreach(fun(ConfigEntry) ->
-			  ulog:debug("Parsing config entry"),
 			  ConfigRecord = config:parse(ConfigEntry),
-			  ulog:debug("Config record is ~p", [ConfigRecord]),
 			  start_worker(ConfigRecord, Supervisor)
 		  end,
 		  ConfigList),
@@ -46,8 +45,8 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
 start_worker(Config, SupRef) ->
     Name = list_to_atom(Config#jid_info.jid),
-    ulog:info("Starting worker for jid ~p with supervisor ~p", 
-	      [Config#jid_info.jid,
+    ulog:info("Starting worker ~p with supervisor ~p", 
+	      [Name,
 	       SupRef
 	      ]),
     {ok, Pid} = supervisor:start_child(SupRef,
@@ -57,6 +56,4 @@ start_worker(Config, SupRef) ->
 					5000,
 					worker,
 					[jid_worker]}),
-    ulog:debug("Worker started with pid ~p, entering rooms", [Pid]),
-    gen_server:cast(Pid, join_rooms),
     ets:insert(workers, {Pid, Name}).

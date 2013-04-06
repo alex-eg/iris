@@ -12,7 +12,6 @@ join_groupchat(Session, RoomTuple) ->
 
 send_muc_keepalive(Session, RoomTuple) ->
     {Room, Nick, Password} = RoomTuple,
-    ulog:debug("Processing muc keepalive for room ~s", [Room]),
     Presence = create_presence(Room, Nick, Password),
     exmpp_session:send_packet(Session, Presence).
     

@@ -33,7 +33,6 @@ handle_cast(join_rooms, State) ->
     {Config, Session} = State,
     RoomList = config:get_room_list(Config),
     %% Need a closure here, because foreach accepts only one argument functions
-    ulog:debug("Acquired room list:~p~n", [RoomList]),
     JoinLambda = fun(RoomTuple) ->
 			 muc_tools:join_groupchat(Session, RoomTuple)
 		 end,
