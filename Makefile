@@ -9,7 +9,7 @@ clean:
 	rm -f src/modules/*~
 	rm -f src/modules/*.beam
 	rm -f *~
-	rm -f ebin/*~
+	rm -f ebin/*.beam
 	rm -f *.dump
 
 compile:
