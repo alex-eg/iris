@@ -9,11 +9,12 @@ clean:
 	rm -f src/modules/*~
 	rm -f src/modules/*.beam
 	rm -f *~
-	rm -rf ebin/
+	rm -f ebin/*~
 	rm -f *.dump
 
 compile:
 	mkdir -p ebin/
+	cp $(NAME).app ebin/
 	erl -pa ebin -make
 
 debug: all
