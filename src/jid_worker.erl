@@ -6,11 +6,19 @@
 -include("xmpp.hrl").
 -behavior(gen_server).
 
+-record(worker_state,
+	{name,
+	 config,
+	 session
+	}).
+
 start_link(Config, Name) ->
-    gen_server:start_link({local, Name}, ?MODULE, Config, []).
+    State = #worker_state{name = Name,
+			  config = Config},
+    gen_server:start_link({local, Name}, ?MODULE, State, []).
 
 init(State) ->
-    Config = State,
+    Config = State#worker_state.config,
     Session = exmpp_session:start(),
     [Name, Server] = string:tokens(Config#jid_info.jid, "@"),
     Jid = exmpp_jid:make(Name,
@@ -26,11 +34,16 @@ init(State) ->
 				exmpp_presence:available(),
 				Config#jid_info.status)
 			     ),
-    gen_server:cast(root, {connected, self()}),
-    {ok, {Config, Session}}.
+    gen_server:cast(root, {connected, self(), State#worker_state.name}),
+    NewState = #worker_state{
+		  name = State#worker_state.name,
+		  config = Config,
+		  session = Session},
+    {ok, NewState}.
     
 handle_cast(join_rooms, State) ->
-    {Config, Session} = State,
+    Config = State#worker_state.config,
+    Session = State#worker_state.session,
     RoomList = config:get_room_list(Config),
     %% Need a closure here, because foreach accepts only one argument functions
     JoinLambda = fun(RoomTuple) ->
@@ -41,7 +54,8 @@ handle_cast(join_rooms, State) ->
     gen_server:cast(self(), send_muc_keepalive),
     {noreply, State};
 handle_cast(send_muc_keepalive, State) ->
-    {Config, Session} = State,
+    Config = State#worker_state.config,
+    Session = State#worker_state.session,
     RoomList = config:get_room_list(Config),
     Lambda = fun(RoomTuple) ->
 		     muc_tools:send_muc_keepalive(Session, RoomTuple)
@@ -55,7 +69,7 @@ handle_cast(send_muc_keepalive, State) ->
 		     ),
     {noreply, State};
 handle_cast({send_packet, Packet}, State) ->
-    {_, Session} = State,
+    Session = State#worker_state.session,
     exmpp_session:send_packet(Session, Packet),
     {noreply, State};
 handle_cast(_, State) -> {noreply, State}.
@@ -64,19 +78,24 @@ handle_cast(_, State) -> {noreply, State}.
 handle_info(_Msg = #received_packet{packet_type = message, raw_packet = Packet}, State) ->
     Type = exmpp_message:get_type(Packet), %% <- returns 'chat' or 'groupchat'
     %% Here starts actual messages' long journey through modules
-    {Config, _} = State,
+    Config = State#worker_state.config,
     process_message(Type, Packet, Config),
     {noreply, State};
 handle_info(_Msg = #received_packet{packet_type = iq}, State) ->
     {noreply, State};
 handle_info(_Msg = #received_packet{packet_type = presence}, State) ->
     {noreply, State};
-handle_info(_Msg, State) -> 
-    ulog:info("Recieved UNKNOWN message: ~p~n", [_Msg]),
+handle_info(Msg, State) -> 
+    ulog:info("Recieved UNKNOWN message: '~p'", [Msg]),
     {noreply, State}.
 
 handle_call(_Msg, _Caller, State) -> {noreply, State}.
-terminate(_Reason, _State) -> ok.
+
+terminate(Reason, State) ->
+    Session = State#worker_state.session,
+    exmpp_session:stop(Session),
+    gen_server:cast(root, {terminated, self(), Reason}),
+    ok.
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
 %% gen_server callbacks end

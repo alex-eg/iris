@@ -15,13 +15,18 @@ init(ParentPid) ->
     self() ! start_children,
     {ok, {ParentPid, ConfigList}}.
 
-handle_cast({connected, From}, State) ->
-    [{_, Name}] = ets:lookup(workers, From),
+handle_cast({connected, From, Name}, State) ->
     ulog:info("Worker ~p has connected with pid ~p, now entering rooms...~n", [Name, From]),
+    ets:insert(workers, {From, Name}),
     gen_server:cast(From, join_rooms),
     {noreply, State};
+handle_cast({terminated, From, Reason}, State) ->
+    [{_, Name}] = ets:lookup(workers, From),
+    ulog:info("Worker ~p for jid ~p terminated.~nReason: ~p", [Name, From, Reason]),
+    ets:delete_object(workers, {From, Name}),
+    {noreply, State};
 handle_cast(Any, State) ->
-    ulog:info("Recieved message: '~p'", [Any]),
+    ulog:info("Recieved UNKNOWN cast: '~p'", [Any]),
     {noreply, State}.
 
 handle_info(start_children, State) ->
@@ -49,11 +54,10 @@ start_worker(Config, SupRef) ->
 	      [Name,
 	       SupRef
 	      ]),
-    {ok, Pid} = supervisor:start_child(SupRef,
+    {ok, _Pid} = supervisor:start_child(SupRef,
 				       {Name,
 					{jid_worker, start_link, [Config, Name]},
 					transient,
 					5000,
 					worker,
-					[jid_worker]}),
-    ets:insert(workers, {Pid, Name}).
+					[jid_worker]}).

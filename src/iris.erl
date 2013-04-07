@@ -14,19 +14,20 @@ start_shortcut() ->
     erlang:unlink(Pid).
 
 %% Application behavior callbacks
-start(_StartType, _StartArgs) ->
+start(normal, _StartArgs) ->
     ulog:info("------====== IRIS starting ======------"),
-    {ok, Pid} = supervisor:start_link({local, supervisor}, ?MODULE, []),
-    erlang:unlink(Pid).
+    {ok, _Pid} = supervisor:start_link({local, main_sup}, ?MODULE, []),
+    {ok, self()}.
 
 stop(_State) ->
+    exit(main_sup, shutdown),
     ok.
 
 %% Supervisor behavior callback
 init(_Args) ->
     {ok, 
      {
-       {one_for_one, 5, 60},
+       {one_for_one, 2, 60},
        [{root,
 	 {root, start_link, [self()]},
 	 transient, 
