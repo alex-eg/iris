@@ -2,7 +2,7 @@
 -export([run/1]).
 
 run("") ->
-    "Ohmmm~";
+    "Nothing to search";
 run(Args) ->
     [{google_search, SearchConfig}] = gen_server:call(root, {get_config, google_search}),
     
