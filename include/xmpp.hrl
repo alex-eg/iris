@@ -10,6 +10,11 @@
 	 modules = []
 	}).
 
+-record(bot_info,
+	{google_search = undefined
+	}).
+	
+
 -define(EMPTY_PRESENCE, #xmlel{name = 'presence'}).
 -define(REJOIN_TIMEOUT, 30000). 
 -define(COMMAND_PREFIX, "!").

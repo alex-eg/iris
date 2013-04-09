@@ -1,5 +1,5 @@
 -module(config).
--export([init/1, get_room_list/1, parse/1]).
+-export([init/1, get_room_list/1, parse/2]).
 
 -include_lib("exmpp/include/exmpp_client.hrl").
 -include("xmpp.hrl").
@@ -9,13 +9,13 @@ init(Filename) ->
     ulog:info("Read configuration file ~s", [Filename]),
     ConfigList.
 
-parse(ConfigEntry) ->
-    {jid_config, Config} = ConfigEntry,
+parse(jid_config, Config) ->
     {value, {jid, Jid}} = lists:keysearch(jid, 1, Config),
     %% Debug only
     %% {value, {resource, Resource}} = lists:keysearch(resource, 1, Config),
     {_, Resource} = init:script_id(),
-    {value, {status, Status}} = lists:keysearch(status, 1, Config),
+    Status = proplists:get_value(status, Config),
+%%    {value, {status, Status}} = lists:keysearch(status, 1, Config),
     {value, {password, Password}} = lists:keysearch(password, 1, Config),
     {value, {rooms, Rooms}} = lists:keysearch(rooms, 1, Config),
     {value, {modules, Modules}} = lists:keysearch(modules, 1, Config),
@@ -26,6 +26,13 @@ parse(ConfigEntry) ->
        password = Password,
        rooms = Rooms,
        modules = Modules
+      };
+parse(bot_config, Config) ->
+    ApiKey = proplists:get_value(api_key, Config),
+    EngineId = proplists:get_value(engine_id, Config),
+    #bot_info{
+       api_key = ApiKey,
+       engine_id = EngineId
       }.
     
 get_room_list(#jid_info{rooms = RoomList}) ->
