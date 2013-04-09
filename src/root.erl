@@ -10,7 +10,11 @@ start_link(SupRef) ->
 init(ParentPid) ->
     application:start(exmpp),
     ulog:info("Root node started and has PID ~p, parent process is ~p", [self(), ParentPid]),
-    ConfigList = config:init("cfg.erl"),
+    ConfigList = config:init("priv/cfg.erl"),
+    
+    %% Todo: issue #13
+    ets:new(config, [named_table, bag]),
+    
     ets:new(workers, [named_table, bag]),
     self() ! start_children,
     {ok, {ParentPid, ConfigList}}.
@@ -32,16 +36,21 @@ handle_cast(Any, State) ->
 handle_info(start_children, State) ->
     ulog:info("Starting children"),
     {Supervisor, ConfigList} = State,
+    JidConfigs = proplists:get_all_values(jid_config, ConfigList),
     lists:foreach(fun(ConfigEntry) ->
-			  ConfigRecord = config:parse(ConfigEntry),
+			  ConfigRecord = config:parse(jid_config, 
+						      ConfigEntry),
 			  start_worker(ConfigRecord, Supervisor)
 		  end,
-		  ConfigList),
+		  JidConfigs),
     {noreply, State};
 handle_info(_Msg, State) -> 
     ulog:info("Recieved UNKNOWN message: ~p~n", [_Msg]),
     {noreply, State}.
 
+%% Todo: issue #13
+handle_call({get_config}, _From, State) ->
+    
 handle_call(_Msg, _Caller, State) -> {noreply, State}.
 terminate(_Reason, _State) -> ok.
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
