@@ -13,13 +13,13 @@ clean:
 	rm -f *.dump
 
 compile:
-	mkdir -p ebin/
-	erl -pa ebin -make
+	rebar get-deps
+	rebar compile
 
 debug: all
 	cd ebin
-	erl -noshell -pa ebin -s $(NAME) $(ENTRY)
+	erl -noshell -pa ebin deps/*/ebin -s $(NAME) $(ENTRY)
 
 debug_sasl: all
 	cd ebin
-	erl -pa ebin -boot start_sasl -s $(NAME) $(ENTRY)
+	erl -pa ebin deps/*/ebin -boot start_sasl -s $(NAME) $(ENTRY)
