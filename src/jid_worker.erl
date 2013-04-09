@@ -45,11 +45,9 @@ handle_cast(join_rooms, State) ->
     Config = State#worker_state.config,
     Session = State#worker_state.session,
     RoomList = config:get_room_list(Config),
-    %% Need a closure here, because foreach accepts only one argument functions
-    JoinLambda = fun(RoomTuple) ->
-			 muc_tools:join_groupchat(Session, RoomTuple)
-		 end,
-    lists:foreach(JoinLambda,
+    lists:foreach(fun(RoomTuple) ->
+			  muc_tools:join_groupchat(Session, RoomTuple)
+		  end,
 		  RoomList),
     gen_server:cast(self(), send_muc_keepalive),
     {noreply, State};
@@ -57,10 +55,9 @@ handle_cast(send_muc_keepalive, State) ->
     Config = State#worker_state.config,
     Session = State#worker_state.session,
     RoomList = config:get_room_list(Config),
-    Lambda = fun(RoomTuple) ->
-		     muc_tools:send_muc_keepalive(Session, RoomTuple)
-	     end,
-    lists:foreach(Lambda,
+    lists:foreach(fun(RoomTuple) ->
+			  muc_tools:send_muc_keepalive(Session, RoomTuple)
+		  end,
 		  RoomList),
     timer:apply_after(?REJOIN_TIMEOUT,
 		      gen_server,
@@ -110,7 +107,7 @@ process_message(groupchat, Packet, Config) ->
 process_groupchat(undefined, Packet, Config) ->
     Body = exmpp_message:get_body(Packet),
     Text = format_str("~s", [Body]),
-    Match = re:run(Text, "^" ++ ?COMMAND_PREFIX ++ "(\\w.*?) (.*)$", [unicode]),
+    Match = re:run(Text, "^" ++ ?COMMAND_PREFIX ++ "(\\w.*?)($| (.*)$)", [unicode]),
     case process_command(Match, Text, Config) of
 	nomatch -> ok;
 	no_such_command -> ok;
@@ -153,7 +150,7 @@ create_packet(Reply, Incoming, Config) ->
 format_str(Format, Data) ->
     lists:flatten(io_lib:format(Format, Data)).
 
-extract_info([_, {ModuleStart, ModuleLength}, {ArgStart, ArgLength}], Text) ->
+extract_info([_, {ModuleStart, ModuleLength}, {ArgStart, ArgLength}|_Tail], Text) ->
     Module = lists:sublist(Text, ModuleStart + 1, ModuleLength),
     Argument = lists:sublist(Text, ArgStart + 1, ArgLength),
     {Module, Argument}.
