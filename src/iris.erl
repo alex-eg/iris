@@ -9,16 +9,12 @@
 
 %% Cheater's shortcut
 start_shortcut() ->
-    ulog:info("Invoked shortcut start, pid is ~p", [self()]),
-    {ok, Pid} = supervisor:start_link({local, main_sup}, ?MODULE, []),
-    erlang:unlink(Pid).
+    application:start(iris).
 
 %% Application behavior callbacks
 start(normal, _StartArgs) ->
     ulog:info("------====== IRIS starting ======------"),
     {ok, _Pid} = supervisor:start_link({local, main_sup}, ?MODULE, []),
-    ulog:info("Testing jiffy!"),
-%%    A = jiffy:
     {ok, self()}.
 
 stop(_State) ->
