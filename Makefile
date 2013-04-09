@@ -14,7 +14,6 @@ clean:
 
 compile:
 	mkdir -p ebin/
-	cp $(NAME).app ebin/
 	erl -pa ebin -make
 
 debug: all
