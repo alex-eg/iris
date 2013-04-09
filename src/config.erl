@@ -10,22 +10,16 @@ init(Filename) ->
     ConfigList.
 
 parse(jid_config, Config) ->
-    {value, {jid, Jid}} = lists:keysearch(jid, 1, Config),
     %% Debug only
     %% {value, {resource, Resource}} = lists:keysearch(resource, 1, Config),
     {_, Resource} = init:script_id(),
-    Status = proplists:get_value(status, Config),
-%%    {value, {status, Status}} = lists:keysearch(status, 1, Config),
-    {value, {password, Password}} = lists:keysearch(password, 1, Config),
-    {value, {rooms, Rooms}} = lists:keysearch(rooms, 1, Config),
-    {value, {modules, Modules}} = lists:keysearch(modules, 1, Config),
     #jid_info {
-       jid = Jid,
-       resource = Resource,
-       status = Status,
-       password = Password,
-       rooms = Rooms,
-       modules = Modules
+       jid = proplists:get_value(jid, Config),
+       resource = proplists:get_value(resource, Config),
+       status = proplists:get_value(status, Config),
+       password = proplists:get_value(password, Config),
+       rooms = proplists:get_value(rooms, Config),
+       modules = proplists:get_value(modules, Config)
       };
 parse(bot_config, Config) ->
     ApiKey = proplists:get_value(api_key, Config),
