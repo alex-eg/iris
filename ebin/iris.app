@@ -2,7 +2,16 @@
  [{description, "Scalable xmpp bot"},
   {vsn, "0.1.0"},
   {registered, [root, main_sup]},
-  {modules, [iris, config]},
-  %% Dependences
+  {modules, [iris, 
+	     root,
+	     jid_worker,
+	     config,
+	     ulog,
+	     muc_tools,
+	     foo,
+	     erronious_module,
+	     default_module,
+	     exit
+	    ]},
   {mod, {iris,[]}}
 ]}.
