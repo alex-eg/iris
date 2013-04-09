@@ -11,7 +11,8 @@
 	     foo,
 	     erronious_module,
 	     default_module,
-	     exit
+	     exit,
+	     g	    
 	    ]},
   {mod, {iris,[]}},
   {applications, [kernel]},

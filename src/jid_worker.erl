@@ -1,10 +1,10 @@
 -module(jid_worker).
+-behavior(gen_server).
 -export([start_link/2]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
 -include_lib("exmpp/include/exmpp_client.hrl").
 -include("xmpp.hrl").
--behavior(gen_server).
 
 -record(worker_state,
 	{name,
@@ -107,7 +107,7 @@ process_message(groupchat, Packet, Config) ->
 process_groupchat(undefined, Packet, Config) ->
     Body = exmpp_message:get_body(Packet),
     Text = format_str("~s", [Body]),
-    Match = re:run(Text, "^" ++ ?COMMAND_PREFIX ++ "(\\w.*?)($| (.*)$)", [unicode]),
+    Match = re:run(Text, "^" ++ ?COMMAND_PREFIX ++ "(\\w*?)($| (.*)$)", [unicode]),
     case process_command(Match, Text, Config) of
 	nomatch -> ok;
 	no_such_command -> ok;
@@ -150,7 +150,13 @@ create_packet(Reply, Incoming, Config) ->
 format_str(Format, Data) ->
     lists:flatten(io_lib:format(Format, Data)).
 
-extract_info([_, {ModuleStart, ModuleLength}, {ArgStart, ArgLength}|_Tail], Text) ->
+extract_info([_, {ModuleStart, ModuleLength}, {ArgStart, ArgLength}], Text) ->
     Module = lists:sublist(Text, ModuleStart + 1, ModuleLength),
-    Argument = lists:sublist(Text, ArgStart + 1, ArgLength),
+    {Module, ""};
+extract_info([_, {ModuleStart, ModuleLength}, {ArgStart, ArgLength}, _], Text) ->
+    Module = lists:sublist(Text, ModuleStart + 1, ModuleLength),
+    Argument = string:strip(
+		 lists:sublist(Text, ArgStart + 1, ArgLength)
+		),
     {Module, Argument}.
+

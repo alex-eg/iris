@@ -9,25 +9,25 @@ init(Filename) ->
     ulog:info("Read configuration file ~s", [Filename]),
     ConfigList.
 
-parse(jid_config, Config) ->
+parse(jid_config, {jid_config, Config}) ->
     %% Debug only
-    %% {value, {resource, Resource}} = lists:keysearch(resource, 1, Config),
     {_, Resource} = init:script_id(),
     #jid_info {
        jid = proplists:get_value(jid, Config),
-       resource = proplists:get_value(resource, Config),
+%%       resource = proplists:get_value(resource, Config),
+       resource = Resource,
        status = proplists:get_value(status, Config),
        password = proplists:get_value(password, Config),
        rooms = proplists:get_value(rooms, Config),
        modules = proplists:get_value(modules, Config)
-      };
-parse(bot_config, Config) ->
-    ApiKey = proplists:get_value(api_key, Config),
-    EngineId = proplists:get_value(engine_id, Config),
-    #bot_info{
-       api_key = ApiKey,
-       engine_id = EngineId
       }.
+%% parse(bot_config, Config) ->
+%%     ApiKey = proplists:get_value(api_key, Config),
+%%     EngineId = proplists:get_value(engine_id, Config),
+%%     #bot_info{
+%%        api_key = ApiKey,
+%%        engine_id = EngineId
+%%       }.
     
 get_room_list(#jid_info{rooms = RoomList}) ->
     lists:map(
