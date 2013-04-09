@@ -13,5 +13,7 @@
 	     default_module,
 	     exit
 	    ]},
-  {mod, {iris,[]}}
+  {mod, {iris,[]}},
+  {applications, [kernel]},
+  {env, []}
 ]}.
