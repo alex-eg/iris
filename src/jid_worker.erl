@@ -125,10 +125,8 @@ process_command({match, Match}, Text, Config) ->
     Module = list_to_atom(ModuleName),
     ModuleList = Config#jid_info.modules,
     ModuleExists = lists:member(Module, ModuleList),
-    ulog:debug("Command ~p evoked with ~s", [Module, ArgString]),
     if ModuleExists ->
-	    Result = Module:run(ArgString),
-	    ulog:debug("Command returned: ~p", [Result]);
+	    Result = Module:run(ArgString);
        not ModuleExists ->
 	    Result = no_such_command
     end,
