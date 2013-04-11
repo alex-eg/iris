@@ -108,12 +108,15 @@ process_groupchat(undefined, Packet, Config) ->
     Body = exmpp_message:get_body(Packet),
     Text = format_str("~s", [Body]),
     Match = re:run(Text, "^" ++ ?COMMAND_PREFIX ++ "(\\w*?)($| (.*)$)", [unicode]),
-    case process_command(Match, Text, Config) of
+    try process_command(Match, Text, Config) of
 	nomatch -> ok;
 	no_such_command -> ok;
 	Reply when is_list(Reply) ->
 	    NewPacket = create_packet(Reply, Packet, Config),
 	    gen_server:cast(self(), {send_packet, NewPacket})
+    catch
+	error:Exception ->
+	    ulog:info("Caught exception while processing command: ~p", [Exception])
     end;
 process_groupchat(_Stamp, _Packet, _Config) ->
     ok.
@@ -148,13 +151,11 @@ create_packet(Reply, Incoming, Config) ->
 format_str(Format, Data) ->
     lists:flatten(io_lib:format(Format, Data)).
 
-extract_info([_, {ModuleStart, ModuleLength}, {ArgStart, ArgLength}], Text) ->
+extract_info([_, {ModuleStart, ModuleLength}, {_ArgStart, _ArgLength}], Text) ->
     Module = lists:sublist(Text, ModuleStart + 1, ModuleLength),
     {Module, ""};
 extract_info([_, {ModuleStart, ModuleLength}, {ArgStart, ArgLength}, _], Text) ->
     Module = lists:sublist(Text, ModuleStart + 1, ModuleLength),
-    Argument = string:strip(
-		 lists:sublist(Text, ArgStart + 1, ArgLength)
-		),
+    Argument = string:strip(lists:sublist(Text, ArgStart + 1, ArgLength)),
     {Module, Argument}.
 
