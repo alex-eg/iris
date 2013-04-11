@@ -25,10 +25,10 @@ stop(_State) ->
 init(_Args) ->
     {ok, 
      {
-       {one_for_one, 2, 60},
+       {one_for_one, 10, 60},
        [{root,
 	 {root, start_link, [self()]},
-	 transient, 
+	 transient,
 	 10000,
 	 worker,
 	 [root]}]
