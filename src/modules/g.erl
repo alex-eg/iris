@@ -6,14 +6,14 @@ run("") ->
 run(Args) ->
     [{google_search, SearchConfig}] = gen_server:call(root, {get_config, google_search}),
     
-    Query = re:replace(Args, "\s+", "+", [global, unicode, {return, list}]),
+    Query = edoc_lib:escape_uri(Args),
     ApiKey = proplists:get_value(api_key, SearchConfig),
     EngineId = proplists:get_value(engine_id, SearchConfig),
     QueryURL = "https://www.googleapis.com/customsearch/v1?key="
     	++ ApiKey
     	++ "&cx=" ++ EngineId
     	++ "&q=" ++ Query
-	++ "&num=1",
+	++ "&num=1",				% We need only 1st result
 
     ResponseJSON = gen_server:call(root, {get_http, QueryURL}),
     {Response} = jsonx:decode(list_to_binary(ResponseJSON)),
