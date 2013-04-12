@@ -1,6 +1,8 @@
 -module(tw).
 -export([run/1]).
 
+run("") ->
+    "A hollow voice says, 'Fool'";
 run(Twit) ->
     [{twitter_api, ApiConfig}] = gen_server:call(root, {get_config, twitter_api}),
     ConsumerKey = proplists:get_value(consumer_key, ApiConfig),

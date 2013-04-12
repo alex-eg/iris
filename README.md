@@ -7,6 +7,8 @@ JSON processing by [iskra's jsonx module](https://github.com/iskra/jsonx)
 
 XMPP handling by [excellent Process One's library](http://processone.github.com/exmpp/)
 
+OAuth protocol library by [erlang oauth](https://github.com/tim/erlang-oauth)
+
 API
 ---
 
