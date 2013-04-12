@@ -40,7 +40,11 @@ init(State) ->
 		  config = Config,
 		  session = Session},
     {ok, NewState}.
-    
+
+handle_call(Any, State) ->
+    ulog:info("Recieved UNKNOWN request: ~p", [Any]),
+    {noreply, State}.
+   
 handle_cast(join_rooms, State) ->
     Config = State#worker_state.config,
     Session = State#worker_state.session,
@@ -69,7 +73,9 @@ handle_cast({send_packet, Packet}, State) ->
     Session = State#worker_state.session,
     exmpp_session:send_packet(Session, Packet),
     {noreply, State};
-handle_cast(_, State) -> {noreply, State}.
+handle_cast(Any, State) ->
+    ulog:info("Recieved UNKNOWN cast: '~p'", [Any]),
+    {noreply, State}.
 
 %% XMPP packages are handled via handle_info for some reason
 handle_info(_Msg = #received_packet{packet_type = message, raw_packet = Packet}, State) ->
@@ -85,8 +91,6 @@ handle_info(_Msg = #received_packet{packet_type = presence}, State) ->
 handle_info(Msg, State) -> 
     ulog:info("Recieved UNKNOWN message: '~p'", [Msg]),
     {noreply, State}.
-
-handle_call(_Msg, _Caller, State) -> {noreply, State}.
 
 terminate(Reason, State) ->
     Session = State#worker_state.session,

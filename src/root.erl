@@ -35,6 +35,26 @@ init(State) ->
     self() ! start_children,
     {ok, State}.
 
+handle_call({get_config, Key}, _From, State) ->
+    Reply = ets:lookup(config, Key),
+    {reply, Reply, State};
+handle_call({get_http, Query}, _From, State) ->
+    try httpc:request(Query) of
+	{ok, {{_Version, 200, _ReasonPhrase}, _Headers, Response}} ->
+	    Response,
+	    {reply, Response, State};
+	Any ->
+	    ulog:info("Request failed: ~p", [Any]),
+	    {reply, error, State}
+    catch
+	Exception ->
+	    ulog:info("Exception ~p occcured!", [Exception]),
+	    {reply, error, State}
+    end;
+handle_call(Any, _Caller, State) -> 
+    ulog:info("Recieved UNKNOWN request: ~p", [Any]),
+    {noreply, State}.
+
 handle_cast({connected, From, Name}, State) ->
     ulog:info("Worker ~p has connected with pid ~p, now entering rooms...~n", [Name, From]),
     ets:insert(workers, {From, Name}),
@@ -63,26 +83,6 @@ handle_info(start_children, State) ->
     {noreply, State};
 handle_info(_Msg, State) -> 
     ulog:info("Recieved UNKNOWN message: ~p~n", [_Msg]),
-    {noreply, State}.
-
-handle_call({get_config, Key}, _From, State) ->
-    Reply = ets:lookup(config, Key),
-    {reply, Reply, State};
-handle_call({get_http, Query}, _From, State) ->
-    try httpc:request(Query) of
-	{ok, {{_Version, 200, _ReasonPhrase}, _Headers, Response}} ->
-	    Response,
-	    {reply, Response, State};
-	Any ->
-	    ulog:info("Request failed: ~p", [Any]),
-	    {reply, error, State}
-    catch
-	Exception ->
-	    ulog:info("Exception ~p occcured!", [Exception]),
-	    {reply, error, State}
-    end;
-handle_call(Msg, _Caller, State) -> 
-    ulog:info("Recieved UNKNOWN request: ~p", [Msg]),
     {noreply, State}.
 
 terminate(_Reason, State) ->
