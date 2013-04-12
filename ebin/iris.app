@@ -12,7 +12,8 @@
 	     erronious_module,
 	     default_module,
 	     exit,
-	     g	    
+	     g,
+	     tw 
 	    ]},
   {mod, {iris,[]}},
   {applications, [kernel]},
