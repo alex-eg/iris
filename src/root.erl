@@ -81,9 +81,21 @@ handle_call({get_http, Query}, _From, State) ->
 	    ulog:info("Exception ~p occcured!", [Exception]),
 	    {reply, error, State}
     end;
-handle_call(_Msg, _Caller, State) -> {noreply, State}.
+handle_call(Msg, _Caller, State) -> 
+    ulog:info("Recieved UNKNOWN request: ~p", [Msg]),
+    {noreply, State}.
 
-terminate(_Reason, _State) -> ok.
+terminate(_Reason, State) ->
+    SupRef = State#root_state.parent,
+    ets:foldl(fun(Elem, ok) ->
+		      supervisor:terminate_child(SupRef, Elem),
+		      supervisor:delete_child(SupRef, Elem),
+		      ok
+	      end,
+	      ok,
+	      workers),
+    ets:delete(workers),
+    ok.
 
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
    
