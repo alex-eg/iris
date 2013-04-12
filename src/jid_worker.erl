@@ -116,7 +116,7 @@ process_groupchat(undefined, Packet, Config) ->
 	    gen_server:cast(self(), {send_packet, NewPacket})
     catch
 	error:Exception ->
-	    ulog:info("Caught exception while processing command: ~p", [Exception])
+	    ulog:info("Caught exception while processing command '~s': ~p", [Text, Exception])
     end;
 process_groupchat(_Stamp, _Packet, _Config) ->
     ok.
