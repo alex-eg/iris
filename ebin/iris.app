@@ -13,7 +13,8 @@
 	     default_module,
 	     exit,
 	     g,
-	     tw 
+	     tw,
+	     external_interface
 	    ]},
   {mod, {iris,[]}},
   {applications, [kernel]},
