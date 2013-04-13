@@ -4,12 +4,12 @@
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 -include("xmpp.hrl").
 
--record(root_state,
+-record(state,
 	{parent
 	}).
 
 start_link(SupRef) ->
-    State = #root_state{parent = SupRef},
+    State = #state{parent = SupRef},
     gen_server:start_link({local, root}, ?MODULE, State, []).
 
 init(State) ->
@@ -19,9 +19,9 @@ init(State) ->
     application:start(inets),
     application:start(ssl),
 
-    ParentPid = State#root_state.parent,
+    ParentPid = State#state.parent,
     ulog:info("Root node started and has PID ~p, parent process is ~p", [self(), ParentPid]),
-    
+
     %% Global config table, everyone can retrieve information from here
     %% Calling root server with get_info request
     ConfigList = config:init("priv/cfg.erl"),
@@ -71,8 +71,8 @@ handle_cast(Any, State) ->
 
 handle_info(start_children, State) ->
     ulog:info("Starting children"),
-    
-    Supervisor = State#root_state.parent,
+
+    Supervisor = State#state.parent,
     JidConfigList = ets:lookup(config, jid_config),
     lists:foreach(fun(ConfigEntry) ->
 			  ConfigRecord = config:parse(jid_config, 
@@ -86,7 +86,7 @@ handle_info(_Msg, State) ->
     {noreply, State}.
 
 terminate(_Reason, State) ->
-    SupRef = State#root_state.parent,
+    SupRef = State#state.parent,
     ets:foldl(fun(Elem, ok) ->
 		      supervisor:terminate_child(SupRef, Elem),
 		      supervisor:delete_child(SupRef, Elem),
@@ -98,19 +98,16 @@ terminate(_Reason, State) ->
     ok.
 
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
-   
+
 %% gen_server callbacks end
 
-start_worker(Config, SupRef) ->
+start_worker(Config, Supervisor) ->
     Name = list_to_atom(Config#jid_info.jid),
-    ulog:info("Starting worker ~p with supervisor ~p", 
-	      [Name,
-	       SupRef
-	      ]),
-    {ok, _Pid} = supervisor:start_child(SupRef,
-				       {Name,
-					{jid_worker, start_link, [Config, Name]},
-					transient,
-					5000,
-					worker,
-					[jid_worker]}).
+    ulog:info("Starting worker ~p with supervisor ~p", [Name, Supervisor]),
+    {ok, _Pid} = supervisor:start_child(Supervisor,
+					{Name,
+					 {jid_worker, start_link, [Config, Name]},
+					 transient,
+					 5000,
+					 worker,
+					 [jid_worker]}).
