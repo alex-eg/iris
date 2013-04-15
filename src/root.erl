@@ -5,22 +5,24 @@
 -include("xmpp.hrl").
 
 -record(state,
-	{parent
+	{supervisor
 	}).
 
 start_link(SupRef) ->
-    State = #state{parent = SupRef},
+    State = #state{supervisor = SupRef},
     gen_server:start_link({local, root}, ?MODULE, State, []).
 
 init(State) ->
     application:start(exmpp),
-    application:start(crypto),
-    application:start(public_key),
-    application:start(inets),
-    application:start(ssl),
 
-    ParentPid = State#state.parent,
-    ulog:info("Root node started and has PID ~p, parent process is ~p", [self(), ParentPid]),
+    application:start(crypto),
+    application:start(public_key), 
+    application:start(ssl),
+    application:start(inets),
+
+
+    SupervisorPid = State#state.supervisor,
+    ulog:info("Root node started and has PID ~p, supervisor process is ~p", [self(), SupervisorPid]),
 
     %% Global config table, everyone can retrieve information from here
     %% Calling root server with get_info request
@@ -32,7 +34,7 @@ init(State) ->
 		  ConfigList),
     %% Place to store children's states
     ets:new(workers, [named_table, bag]),
-    self() ! start_children,
+    self() ! connect_plugins,
     {ok, State}.
 
 handle_call({get_config, Key}, _From, State) ->
@@ -47,7 +49,7 @@ handle_call({get_http, Query}, _From, State) ->
 	    ulog:info("Request failed: ~p", [Any]),
 	    {reply, error, State}
     catch
-	Exception ->
+	error:Exception ->
 	    ulog:info("Exception ~p occcured!", [Exception]),
 	    {reply, error, State}
     end;
@@ -69,10 +71,18 @@ handle_cast(Any, State) ->
     ulog:info("Recieved UNKNOWN cast: '~p'", [Any]),
     {noreply, State}.
 
+handle_info(connect_plugins, State = #state{supervisor = Sup}) ->
+    [{plugins, List}] = ets:lookup(config, plugins),
+    lists:foreach(fun(Plugin) ->
+			  start_plugin(Plugin, Sup)
+		  end,
+		  List),
+    self() ! start_children,
+    {noreply, State};
 handle_info(start_children, State) ->
     ulog:info("Starting children"),
 
-    Supervisor = State#state.parent,
+    Supervisor = State#state.supervisor,
     JidConfigList = ets:lookup(config, jid_config),
     lists:foreach(fun(ConfigEntry) ->
 			  ConfigRecord = config:parse(jid_config, 
@@ -86,7 +96,7 @@ handle_info(_Msg, State) ->
     {noreply, State}.
 
 terminate(_Reason, State) ->
-    SupRef = State#state.parent,
+    SupRef = State#state.supervisor,
     ets:foldl(fun(Elem, ok) ->
 		      supervisor:terminate_child(SupRef, Elem),
 		      supervisor:delete_child(SupRef, Elem),
@@ -111,3 +121,15 @@ start_worker(Config, Supervisor) ->
 					 5000,
 					 worker,
 					 [jid_worker]}).
+
+start_plugin(Plugin, Supervisor) ->
+    try Plugin:start(Supervisor) of
+	{ok, Pid} ->
+	    ulog:info("~p started with pid ~p", [Plugin, Pid]),
+	    ok
+    catch
+	error:Exception ->
+	    ulog:info("Plugin ~p failed to load with exception:~n~p~n"
+		      "Backtrace: ~p", [Plugin, Exception, erlang:get_stacktrace()])
+    end.
+	
