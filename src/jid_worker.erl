@@ -35,13 +35,12 @@ init(State) ->
 				Config#jid_info.status)
 			     ),
     gen_server:cast(root, {connected, self(), State#state.name}),
-    NewState = #state{
-		  name = State#state.name,
-		  config = Config,
-		  session = Session},
+    NewState = State#state{
+		 config = Config,
+		 session = Session},
     {ok, NewState}.
 
-handle_call(Any, State) ->
+handle_call(Any, _From, State) ->
     ulog:info("Recieved UNKNOWN request: ~p", [Any]),
     {noreply, State}.
 
@@ -120,7 +119,9 @@ process_groupchat(undefined, Packet, Config) ->
 	    gen_server:cast(self(), {send_packet, NewPacket})
     catch
 	error:Exception ->
-	    ulog:info("Caught exception while processing command '~s': ~p", [Text, Exception])
+	    ulog:info("Caught exception while processing command '~s':~n~p~n"
+		      "Backtrace: ~p",
+		      [Text, Exception, erlang:get_stacktrace()])
     end;
 process_groupchat(_Stamp, _Packet, _Config) ->
     ok.
