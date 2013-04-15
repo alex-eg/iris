@@ -4,6 +4,10 @@
 	   ]
  },
  
+ {denshi_jisho, [
+		 {request_url, "http://jisho.org/words?jap=~s&eng=~s&dict=edict"}
+		]},
+ 
  {twitter_api, [
 		{consumer_key, "your-consumer-key"},
 		{consumer_secret, "your-consumer-secret"},
