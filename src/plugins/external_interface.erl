@@ -1,6 +1,6 @@
 -module(external_interface).
 -behavior(gen_server).
--export([start/1, start_link/1, accept_loop/2]).
+-export([start/1, start_link/1, accept_loop/3]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
 -define(TCP_OPTIONS, [binary, {packet, 0}, {active, false}, {reuseaddr, true}]).
@@ -26,7 +26,6 @@ start_link(Supervisor) ->
 init(State) ->
     Port = State#state.port,
     {ok, LSocket} = gen_tcp:listen(Port, ?TCP_OPTIONS),
-    proc_lib:spawn(?MODULE, accept_loop, [self(), LSocket]),
     NewState = State#state{socket = LSocket},
     {ok, NewState}.
 
@@ -34,8 +33,11 @@ handle_call(Any, _From, State) ->
     ulog:info("Recieved UNKNOWN request: ~p", [Any]),
     {noreply, State}.
 
-handle_cast({accepted, _Pid}, State = #state{socket = LSocket}) ->
-    proc_lib:spawn(?MODULE, accept_loop, [self(), LSocket]),
+handle_cast({subscribe, From}, State) ->
+    proc_lib:spawn(?MODULE, accept_loop, [self(), LSocket, From]),
+    {noreply, State};
+handle_cast({accepted, _Pid, Subscriber}, State = #state{socket = LSocket}) ->
+    proc_lib:spawn(?MODULE, accept_loop, [self(), LSocket, Subscriber]),
     {noreply, State};
 handle_cast(Any, State) ->
     ulog:info("Recieved UNKNOWN cast: '~p'", [Any]),
@@ -53,17 +55,18 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
 %% gen_server callbacks end
 
-accept_loop(Server, LSocket) ->
+accept_loop(Server, LSocket, Subscriber) ->
     {ok, Socket} = gen_tcp:accept(LSocket),
-    gen_server:cast(Server, {accepted, self()}),
-    loop(Socket),
+    gen_server:cast(Server, {accepted, self(), Subscriber}),
+    loop(Socket, Subscriber),
     {normal, shutdown}.
 
-loop(Socket) ->
+loop(Socket, Subscriber) ->
     case gen_tcp:recv(Socket, 0) of
         {ok, Data} ->
 	    ulog:info("Recieved data via socket: ~p", [Data]),
-            loop(Socket);
+	    gen_server:cast(Subscriber, {socket_recieved, Data}),
+            loop(Socket, Subscriber)
         {error, closed} ->
             ok
     end.
