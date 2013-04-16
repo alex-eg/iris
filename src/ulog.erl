@@ -1,5 +1,6 @@
 -module(ulog).
 -export([debug/2, debug/1]).
+-export([error/2, error/1]).
 -export([info/1, info/2]).
 -export([warning/1, warning/2]).
 
@@ -11,13 +12,19 @@ debug(Format, Args) ->
     out(dbg, Format, Args).
 
 debug(Args) ->
-    io:format("[~w] ~ts~n",[dbg,Args]).
+    io:format("[~w] ~ts~n",[dbg, Args]).
+
+error(Format, Args) ->
+    out(err, Format, Args).
+
+error(Args) ->
+    io:format("[~w] ~ts~n",[err, Args]).
 
 info(Format, Args) ->
     out(inf, Format, Args).
 
 info(Args) ->
-    io:format("[~w] ~ts~n",[inf,Args]).
+    io:format("[~w] ~ts~n",[inf, Args]).
 
 warning(Record) ->
     out(wrn, "~p", [Record]).
