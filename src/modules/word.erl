@@ -1,5 +1,6 @@
 -module(word).
 -export([run/1]).
+-behaviour(iris_module).
 
 run(Args) ->
     [{denshi_jisho, Config}] = gen_server:call(root, {get_config, denshi_jisho}),
