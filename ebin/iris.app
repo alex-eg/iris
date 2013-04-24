@@ -14,7 +14,10 @@
 	     exit,
 	     g,
 	     tw,
-	     external_interface
+	     external_interface,
+	     hooks,
+	     word,
+	     iris_module
 	    ]},
   {mod, {iris,[]}},
   {applications, [kernel]},
