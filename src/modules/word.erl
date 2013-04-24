@@ -78,17 +78,14 @@ extract_words(<<" Found words ">>, BodyTags) ->
     SenseTags = get_tag_list(<<"span">>,
 			     {<<"class">>, <<"tags">>},
 			     BodyTags),
-    Sense = extract_tags(SenseTags),
+    Sense = extract_tags(lists:reverse(SenseTags)),
 
-    KanaStringList = lists:map(fun(E) -> binary_to_list(E) end,
-			       Kana),
-    KanjiStringList = lists:map(fun(E) -> binary_to_list(E) end,
-				Kanji),
-    MeaningStringList = lists:map(fun(E) -> binary_to_list(E) end,
-				  Meaning),
+    KanaStringList = lists:map(fun binary_to_list/1, Kana),
+    KanjiStringList = lists:map(fun binary_to_list/1, Kanji),
+    MeaningStringList = lists:map(fun binary_to_list/1, Meaning),
     SenseStringList = lists:map(fun binary_to_list/1, Sense),
 
-    Len = min(2, length(KanjiStringList)),
+    Len = min(2, length(KanjiStringList)), % only first two results
     {Start, _} = lists:split(Len,
 			     lists:zip(lists:zip(KanjiStringList, KanaStringList), 
 				       lists:zip(MeaningStringList, SenseStringList))),
@@ -101,7 +98,8 @@ extract_words(<<" Found words ">>, BodyTags) ->
 
 			       Mn1 = string:strip(Mn),
 			       Mn2 = string:strip(Mn1, right, $\t),
-			       Mn3 = re:replace(Mn2, ";([1-9]:)", "\n\\1", [unicode, global, {return, list}]),
+			       io:format("~nBaka:~p~nStr:~p~n", [Mn2, Mn2]),
+			       Mn3 = re:replace(Mn2, "; *([1-9]:)", "\n\\1", [unicode, global, {return, list}]),
 
 			       Tg1 = string:strip(Tg),
 			       Tg2 = string:strip(Tg1, right, $\t),
