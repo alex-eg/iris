@@ -42,7 +42,7 @@ handle_call({get_config, Key}, _From, State) ->
     {reply, Reply, State};
 handle_call({get_http, Query}, _From, State) ->
     try httpc:request(Query) of
-	{ok, {{_Version, 200, _ReasonPhrase}, _Headers, Response}} ->
+	{ok, Response} ->
 	    Response,
 	    {reply, Response, State};
 	Any ->

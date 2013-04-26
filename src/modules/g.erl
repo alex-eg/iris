@@ -17,7 +17,7 @@ run(Args) ->
     	++ "&q=" ++ Query
     	++ "&num=1",				% We need only 1st result
 
-    ResponseJSON = gen_server:call(root, {get_http, QueryURL}),
+    {{_, 200, _}, _, ResponseJSON} = gen_server:call(root, {get_http, QueryURL}),
     {Response} = jsonx:decode(list_to_binary(ResponseJSON)),
     Items = lists:keyfind(<<"items">>, 1, Response),
     Result = extract_result(Items),
