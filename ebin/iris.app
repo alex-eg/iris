@@ -17,7 +17,9 @@
 	     external_interface,
 	     hooks,
 	     word,
-	     iris_module
+	     iris_module,
+	     gelb,
+	     muc_commands
 	    ]},
   {mod, {iris,[]}},
   {applications, [kernel]},
