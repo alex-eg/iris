@@ -98,7 +98,6 @@ extract_words(<<" Found words ">>, BodyTags) ->
 
 			       Mn1 = string:strip(Mn),
 			       Mn2 = string:strip(Mn1, right, $\t),
-			       io:format("~nBaka:~p~nStr:~p~n", [Mn2, Mn2]),
 			       Mn3 = re:replace(Mn2, "; *([1-9]:)", "\n\\1", [unicode, global, {return, list}]),
 
 			       Tg1 = string:strip(Tg),
