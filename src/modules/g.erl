@@ -36,9 +36,12 @@ extract_result({<<"items">>, ResultList}) ->
     Title = proplists:get_value(title, ResultProplist),
     Snippet = proplists:get_value(snippet, ResultProplist),
     Link = proplists:get_value(link, ResultProplist),
-    binary_to_list(Title) ++ "\n" ++
+    Result = binary_to_list(Title) ++ "\n" ++
     	binary_to_list(Snippet) ++ "\n" ++
-    	binary_to_list(Link);
+    	binary_to_list(Link),
+    ulog:debug("Stairs are: ~s", [Result]),
+    io:format("Stairs are unicode: ~s~n", [Result]),
+    Result;
 extract_result(false) ->
     "Sorry, nothing found".
     
