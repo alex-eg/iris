@@ -21,14 +21,7 @@ parse(jid_config, {jid_config, Config}) ->
        rooms = proplists:get_value(rooms, Config),
        modules = proplists:get_value(modules, Config)
       }.
-%% parse(bot_config, Config) ->
-%%     ApiKey = proplists:get_value(api_key, Config),
-%%     EngineId = proplists:get_value(engine_id, Config),
-%%     #bot_info{
-%%        api_key = ApiKey,
-%%        engine_id = EngineId
-%%       }.
-    
+
 get_room_list(#jid_info{rooms = RoomList}) ->
     lists:map(
       fun(RoomTuple) ->
