@@ -41,9 +41,11 @@ handle_call({get_config, Key}, _From, State) ->
     Reply = ets:lookup(config, Key),
     {reply, Reply, State};
 handle_call({get_http, Query}, _From, State) ->
+    ulog:debug("Recieved get_http call"),
     try httpc:request(Query) of
 	{ok, Response} ->
 	    Response,
+	    ulog:debug("Got response: ~p", Response),
 	    {reply, Response, State};
 	Any ->
 	    ulog:info("Request failed: ~p", [Any]),
