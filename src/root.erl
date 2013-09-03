@@ -13,13 +13,13 @@ start_link(SupRef) ->
     gen_server:start_link({local, root}, ?MODULE, State, []).
 
 init(State) ->
-    application:start(exmpp),
+    ok = application:ensure_started(exmpp),
 
-    application:start(crypto),
-    application:start(public_key), 
-    application:start(ssl),
-    application:start(inets),
-
+    ok = application:ensure_started(crypto),
+    ok = application:ensure_started(asn1),
+    ok = application:ensure_started(public_key), 
+    ok = application:ensure_started(ssl),
+    ok = application:ensure_started(inets),
 
     SupervisorPid = State#state.supervisor,
     ulog:info("Root node started and has PID ~p, supervisor process is ~p", [self(), SupervisorPid]),
