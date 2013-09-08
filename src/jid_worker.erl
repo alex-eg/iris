@@ -108,7 +108,7 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
 process_message(chat, Packet, Config) ->
     %% FUTURE: add ignore list to forbid unwanted individuals calling modules
-    process_message(groupchat, Packet, Config);
+    process_chat(Packet, Config);
 process_message(groupchat, Packet, Config) ->
     Stamp = exmpp_xml:get_element(Packet, delay),
     process_groupchat(Stamp, Packet, Config).
@@ -132,6 +132,13 @@ process_groupchat(undefined, Packet, Config) ->
 process_groupchat(_Stamp, _Packet, _Config) ->
     ok.
 
+process_chat(Packet, Config) ->
+    Body = exmpp_message:get_body(Packet),
+    Text = format_str("~s", [Body]),
+    %% simple echo by now
+    NewPacket = create_packet(Text, Packet, Config),
+    gen_server:cast(self(), {send_packet, NewPacket}).
+    
 process_command(nomatch, _, _) ->
     nomatch;
 process_command({match, Match}, Text, Config) ->
