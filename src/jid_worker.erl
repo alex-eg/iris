@@ -157,7 +157,8 @@ process_command({match, Match}, Text, Config) ->
 
 create_packet(Type, Reply, Incoming, Config) ->
     From = exmpp_xml:get_attribute(Incoming, <<"from">>, undefined),
-    [Jid, Resource] = string:tokens(format_str("~s",[From]),"/"),
+    [Jid|ResourceList] = string:tokens(format_str("~s",[From]),"/"),
+    Resource = string:join(ResourceList, "/"),	% In case nick/resource contains '/' characters
     Sender = format_str("~s", [Config#jid_info.jid]),
     create_packet(Type, Jid, Resource, Sender, Reply).
 
