@@ -121,7 +121,7 @@ process_groupchat(undefined, Packet, Config) ->
 	nomatch -> ok;
 	no_such_command -> ok;
 	Reply when is_list(Reply) ->
-	    NewPacket = create_packet(Reply, Packet, Config),
+	    NewPacket = create_packet(groupchat, Reply, Packet, Config),
 	    gen_server:cast(self(), {send_packet, NewPacket})
     catch
 	error:Exception ->
@@ -133,10 +133,12 @@ process_groupchat(_Stamp, _Packet, _Config) ->
     ok.
 
 process_chat(Packet, Config) ->
+    ulog:debug("Recieved chat packet: ~p", [Packet]),
     Body = exmpp_message:get_body(Packet),
     Text = format_str("~s", [Body]),
     %% simple echo by now
-    NewPacket = create_packet(Text, Packet, Config),
+    NewPacket = create_packet(chat, Text, Packet, Config),
+    ulog:debug("Sending packet back: ~p", [NewPacket]),
     gen_server:cast(self(), {send_packet, NewPacket}).
     
 process_command(nomatch, _, _) ->
@@ -153,16 +155,26 @@ process_command({match, Match}, Text, Config) ->
     end,
     Result.
 
-create_packet(Reply, Incoming, Config) ->
+create_packet(Type, Reply, Incoming, Config) ->
     From = exmpp_xml:get_attribute(Incoming, <<"from">>, undefined),
-    [Room, Nick] = string:tokens(format_str("~s",[From]),"/"),
+    [Jid, Resource] = string:tokens(format_str("~s",[From]),"/"),
+    Sender = format_str("~s", [Config#jid_info.jid]),
+    create_packet(Type, Jid, Resource, Sender, Reply).
+
+create_packet(chat, Jid, Resource, Sender, Reply) ->
+    Reciever = list_to_binary(Jid ++ "/" ++ Resource),
+    Packet1 = exmpp_message:make_chat(?NS_JABBER_CLIENT, Reply),
+    Packet2 = exmpp_xml:set_attribute(Packet1, <<"from">>, Sender),
+    Packet3 = exmpp_xml:set_attribute(Packet2, <<"to">>, Reciever),
+    Packet3;    
+create_packet(groupchat, Room, Nick, Sender, Reply) ->
     Body = Nick ++ ", " ++ Reply,
     Reciever = list_to_binary(Room),
-    Sender = format_str("~s", [Config#jid_info.jid]),
     Packet1 = exmpp_message:make_groupchat(?NS_JABBER_CLIENT, Body),
     Packet2 = exmpp_xml:set_attribute(Packet1, <<"from">>, Sender),
     Packet3 = exmpp_xml:set_attribute(Packet2, <<"to">>, Reciever),
     Packet3.
+
 
 %% Local helpers below
 
