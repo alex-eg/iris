@@ -33,9 +33,6 @@ handle_call(Any, _From, State) ->
     ulog:info("Recieved UNKNOWN request: ~p", [Any]),
     {noreply, State}.
 
-%handle_cast({subscribe, From}, State) ->
-%    proc_lib:spawn(?MODULE, accept_loop, [self(), LSocket, From]),
-%    {noreply, State};
 handle_cast({accepted, _Pid, Subscriber}, State = #state{socket = LSocket}) ->
     proc_lib:spawn(?MODULE, accept_loop, [self(), LSocket, Subscriber]),
     {noreply, State};
