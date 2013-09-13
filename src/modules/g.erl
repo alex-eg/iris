@@ -5,7 +5,7 @@
 run("") ->
     "Nothing to search";
 run(Args) ->
-    [{google_search, SearchConfig}] = gen_server:call(root, {get_config, google_search}),
+    [{google_search, SearchConfig}] = gen_server:call(core, {get_config, google_search}),
     
     EscapedQuery = http_uri:encode(Args),
     Query = re:replace(EscapedQuery, "%20", "+", [global, unicode, {return, list}]),
@@ -16,7 +16,7 @@ run(Args) ->
     	++ "&cx=" ++ EngineId
     	++ "&q=" ++ Query
     	++ "&num=1",				% We need only 1st result
-    {{_, 200, _}, _, ResponseJSON} = gen_server:call(root, {get_http, QueryURL}),
+    {{_, 200, _}, _, ResponseJSON} = gen_server:call(core, {get_http, QueryURL}),
     {Response} = jsonx:decode(list_to_binary(ResponseJSON)),
     Items = lists:keyfind(<<"items">>, 1, Response),
     Result = extract_result(Items),

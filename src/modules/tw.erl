@@ -5,7 +5,7 @@
 run("") ->
     "A hollow voice says, 'Fool'";
 run(Twit) ->
-    [{twitter_api, ApiConfig}] = gen_server:call(root, {get_config, twitter_api}),
+    [{twitter_api, ApiConfig}] = gen_server:call(core, {get_config, twitter_api}),
     ConsumerKey = proplists:get_value(consumer_key, ApiConfig),
     ConsumerSecret = proplists:get_value(consumer_secret, ApiConfig),
     AccessToken = proplists:get_value(access_token, ApiConfig),
