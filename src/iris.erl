@@ -13,7 +13,9 @@ start_shortcut() ->
 
 %% Application behavior callbacks
 start(normal, _StartArgs) ->
-    ulog:info("------====== IRIS starting ======------"),
+    ulog:info("#---------===================---------#"),
+    ulog:info("|-----====== IRIS starting ======-----|"),
+    ulog:info("#---------===================---------#"),
     {ok, _Pid} = supervisor:start_link({local, main_sup}, ?MODULE, []),
     {ok, self()}.
 
