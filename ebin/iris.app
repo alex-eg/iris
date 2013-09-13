@@ -19,7 +19,8 @@
 	     word,
 	     iris_module,
 	     gelb,
-	     muc_commands
+	     muc_commands,
+	     qw
 	    ]},
   {mod, {iris,[]}},
   {applications, [kernel]},
