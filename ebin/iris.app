@@ -3,7 +3,7 @@
   {vsn, "0.1.0"},
   {registered, [root, main_sup]},
   {modules, [iris, 
-	     root,
+	     core,
 	     jid_worker,
 	     config,
 	     ulog,
