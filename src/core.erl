@@ -1,4 +1,4 @@
--module(root).
+-module(core).
 -behavior(gen_server).
 -export([start_link/1]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
@@ -10,7 +10,7 @@
 
 start_link(SupRef) ->
     State = #state{supervisor = SupRef},
-    gen_server:start_link({local, root}, ?MODULE, State, []).
+    gen_server:start_link({local, core}, ?MODULE, State, []).
 
 init(State) ->
     ok = application:ensure_started(exmpp),
@@ -25,7 +25,7 @@ init(State) ->
     ulog:info("Root node started and has PID ~p, supervisor process is ~p", [self(), SupervisorPid]),
 
     %% Global config table, everyone can retrieve information from here
-    %% Calling root server with get_info request
+    %% Calling core server with get_info request
     ConfigList = config:init("priv/cfg.erl"),
     ets:new(config, [named_table, bag]),
     lists:foreach(fun(X) ->

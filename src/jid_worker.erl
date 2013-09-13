@@ -34,7 +34,7 @@ init(State) ->
 				exmpp_presence:available(),
 				Config#jid_info.status)
 			     ),
-    gen_server:cast(root, {connected, self(), State#state.name}),
+    gen_server:cast(core, {connected, self(), State#state.name}),
     NewState = State#state{
 		 config = Config,
 		 session = Session},
@@ -100,7 +100,7 @@ handle_info(Msg, State) ->
 terminate(Reason, State) ->
     Session = State#state.session,
     exmpp_session:stop(Session),
-    gen_server:cast(root, {terminated, self(), Reason}),
+    gen_server:cast(core, {terminated, self(), Reason}),
     ok.
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
