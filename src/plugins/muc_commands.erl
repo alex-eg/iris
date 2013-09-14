@@ -1,1 +1,0 @@
--module(muc_commands).
