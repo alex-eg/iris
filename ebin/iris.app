@@ -15,7 +15,6 @@
 	     g,
 	     tw,
 	     external_interface,
-	     hooks,
 	     word,
 	     iris_module,
 	     gelb,
