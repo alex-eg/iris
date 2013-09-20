@@ -9,10 +9,12 @@
 -record(state,
 	{name,
 	 config,
-	 session
+	 session,
+	 peer_message_queues %% for storing messages from every peer (from inside room or from roster)
 	}).
 
 start_link(Config, Name) ->
+    QueuesEts = ets:new(message_queues, 
     State = #state{name = Name,
 		   config = Config},
     gen_server:start_link({local, Name}, ?MODULE, State, []).
@@ -72,11 +74,14 @@ handle_cast({send_packet, Packet}, State) ->
     Session = State#state.session,
     exmpp_session:send_packet(Session, Packet),
     {noreply, State};
+handle_cast({add_message, Message, Sender}, State) ->
+    %% Add message to the end of the queue
+    OldQueue = State#
 handle_cast(Any, State) ->
     ulog:info("Recieved UNKNOWN cast: '~p'", [Any]),
     {noreply, State}.
 
-%% XMPP packages are handled via handle_info for some reason
+%% XMPP packets are handled via handle_info for some reason
 handle_info(_Msg = #received_packet{packet_type = message, raw_packet = Packet}, State) ->
     Type = exmpp_message:get_type(Packet), %% <- returns 'chat' or 'groupchat'
     %% Here starts actual messages' long journey through modules
