@@ -37,7 +37,3 @@ get_room_list(#jid_info{rooms = RoomList}) ->
 	      end
       end,
       RoomList).
-	      
-	      
-	  
-			  
