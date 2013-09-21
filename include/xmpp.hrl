@@ -18,3 +18,4 @@
 -define(EMPTY_PRESENCE, #xmlel{name = 'presence'}).
 -define(REJOIN_TIMEOUT, 30000). 
 -define(COMMAND_PREFIX, "@").
+-define(QUEUE_SIZE, 10). % store last 10 messages per peer
