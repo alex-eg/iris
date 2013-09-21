@@ -16,10 +16,10 @@ compile:
 	rebar get-deps
 	rebar compile
 
-debug: all
+debug: clean all
 	cd ebin
 	erl -noshell -pa ebin deps/*/ebin -s $(NAME) $(ENTRY)
 
-debug_sasl: all
+debug_sasl: clean all
 	cd ebin
 	erl -pa ebin deps/*/ebin -boot start_sasl -s $(NAME) $(ENTRY)
