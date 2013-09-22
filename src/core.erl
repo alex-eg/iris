@@ -5,8 +5,8 @@
 -include("xmpp.hrl").
 
 -record(state,
-	{supervisor
-	}).
+        {supervisor
+        }).
 
 start_link(SupRef) ->
     State = #state{supervisor = SupRef},
@@ -29,9 +29,9 @@ init(State) ->
     ConfigList = config:init("priv/cfg.erl"),
     ets:new(config, [named_table, bag]),
     lists:foreach(fun(X) ->
-			  ets:insert(config, X)
-		  end,
-		  ConfigList),
+                          ets:insert(config, X)
+                  end,
+                  ConfigList),
     %% Place to store children's states
     ets:new(workers, [named_table, bag]),
     self() ! connect_plugins,
@@ -42,16 +42,16 @@ handle_call({get_config, Key}, _From, State) ->
     {reply, Reply, State};
 handle_call({get_http, Query}, _From, State) ->
     try httpc:request(Query) of
-	{ok, Response} ->
-	    Response,
-	    {reply, Response, State};
-	Any ->
-	    ulog:info("Request failed: ~p", [Any]),
-	    {reply, error, State}
+        {ok, Response} ->
+            Response,
+            {reply, Response, State};
+        Any ->
+            ulog:info("Request failed: ~p", [Any]),
+            {reply, error, State}
     catch
-	error:Exception ->
-	    ulog:info("Exception ~p occcured!", [Exception]),
-	    {reply, error, State}
+        error:Exception ->
+            ulog:info("Exception ~p occcured!", [Exception]),
+            {reply, error, State}
     end;
 handle_call(Any, _Caller, State) -> 
     ulog:info("Recieved UNKNOWN request: ~p", [Any]),
@@ -74,9 +74,9 @@ handle_cast(Any, State) ->
 handle_info(connect_plugins, State = #state{supervisor = Sup}) ->
     [{plugins, List}] = ets:lookup(config, plugins),
     lists:foreach(fun(Plugin) ->
-			  start_plugin(Plugin, Sup)
-		  end,
-		  List),
+                          start_plugin(Plugin, Sup)
+                  end,
+                  List),
     self() ! start_children,
     {noreply, State};
 handle_info(start_children, State) ->
@@ -85,11 +85,11 @@ handle_info(start_children, State) ->
     Supervisor = State#state.supervisor,
     JidConfigList = ets:lookup(config, jid_config),
     lists:foreach(fun(ConfigEntry) ->
-			  ConfigRecord = config:parse(jid_config, 
-						      ConfigEntry),
-			  start_worker(ConfigRecord, Supervisor)
-		  end,
-		  JidConfigList),
+                          ConfigRecord = config:parse(jid_config, 
+                                                      ConfigEntry),
+                          start_worker(ConfigRecord, Supervisor)
+                  end,
+                  JidConfigList),
     {noreply, State};
 handle_info(_Msg, State) -> 
     ulog:info("Recieved UNKNOWN message: ~p~n", [_Msg]),
@@ -98,12 +98,12 @@ handle_info(_Msg, State) ->
 terminate(_Reason, State) ->
     SupRef = State#state.supervisor,
     ets:foldl(fun(Elem, ok) ->
-		      supervisor:terminate_child(SupRef, Elem),
-		      supervisor:delete_child(SupRef, Elem),
-		      ok
-	      end,
-	      ok,
-	      workers),
+                      supervisor:terminate_child(SupRef, Elem),
+                      supervisor:delete_child(SupRef, Elem),
+                      ok
+              end,
+              ok,
+              workers),
     ets:delete(workers),
     ok.
 
@@ -115,21 +115,21 @@ start_worker(Config, Supervisor) ->
     Name = list_to_atom(Config#jid_info.jid),
     ulog:info("Starting worker ~p with supervisor ~p", [Name, Supervisor]),
     {ok, _Pid} = supervisor:start_child(Supervisor,
-					{Name,
-					 {jid_worker, start_link, [Config, Name]},
-					 transient,
-					 5000,
-					 worker,
-					 [jid_worker]}).
+                                        {Name,
+                                         {jid_worker, start_link, [Config, Name]},
+                                         transient,
+                                         5000,
+                                         worker,
+                                         [jid_worker]}).
 
 start_plugin(Plugin, Supervisor) ->
     try Plugin:start(Supervisor) of
-	{ok, Pid} ->
-	    ulog:info("~p started with pid ~p", [Plugin, Pid]),
-	    ok
+        {ok, Pid} ->
+            ulog:info("~p started with pid ~p", [Plugin, Pid]),
+            ok
     catch
-	error:Exception ->
-	    ulog:info("Plugin ~p failed to load with exception:~n~p~n"
-		      "Backtrace: ~p", [Plugin, Exception, erlang:get_stacktrace()])
+        error:Exception ->
+            ulog:info("Plugin ~p failed to load with exception:~n~p~n"
+                      "Backtrace: ~p", [Plugin, Exception, erlang:get_stacktrace()])
     end.
-	
+

@@ -14,7 +14,7 @@ parse(jid_config, {jid_config, Config}) ->
     {_, Resource} = init:script_id(),
     #jid_info {
        jid = proplists:get_value(jid, Config),
-%%       resource = proplists:get_value(resource, Config),
+       %%       resource = proplists:get_value(resource, Config),
        resource = Resource,
        status = proplists:get_value(status, Config),
        password = proplists:get_value(password, Config),
@@ -25,15 +25,15 @@ parse(jid_config, {jid_config, Config}) ->
 get_room_list(#jid_info{rooms = RoomList}) ->
     lists:map(
       fun(RoomTuple) ->
-	      if tuple_size(RoomTuple) == 2 ->
-		      {Room, Nick} = RoomTuple,
-		      {Room, Nick, nopassword};
-		 tuple_size(RoomTuple) == 3 ->
-		      {Room, Nick, Password} = RoomTuple,
-		      {Room, Nick, Password};
-		 true -> 
-		      ulog:error("Bad Room Tuple ~p", [RoomTuple]),
-		      error
-	      end
+              if tuple_size(RoomTuple) == 2 ->
+                      {Room, Nick} = RoomTuple,
+                      {Room, Nick, nopassword};
+                 tuple_size(RoomTuple) == 3 ->
+                      {Room, Nick, Password} = RoomTuple,
+                      {Room, Nick, Password};
+                 true -> 
+                      ulog:error("Bad Room Tuple ~p", [RoomTuple]),
+                      error
+              end
       end,
       RoomList).

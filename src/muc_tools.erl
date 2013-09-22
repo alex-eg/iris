@@ -14,31 +14,27 @@ send_muc_keepalive(Session, RoomTuple) ->
     {Room, Nick, Password} = RoomTuple,
     Presence = create_presence(Room, Nick, Password),
     exmpp_session:send_packet(Session, Presence).
-    
-%% Helpers below
+
 create_presence(Room, Nick, nopassword) ->
-    %% Fixme: self-defined marco and manual presence creation is definetly NOT a good practice
-    %% Well, exmpp seems to provide no such functionality, so I have to prettify it by myself
     BasePresence = exmpp_xml:set_attribute(?EMPTY_PRESENCE,
-					   <<"to">>,
-					   list_to_binary(Room ++ "/" ++ Nick)),
+                                           <<"to">>,
+                                           list_to_binary(Room ++ "/" ++ Nick)),
     exmpp_xml:append_child(BasePresence,
-			   #xmlel{name = x, 
-				  attrs = [#xmlattr{name = <<"xmlns">>, 
-						    value = ?NS_MUC_b}]
-				 }
-			  );
+                           #xmlel{name = x, 
+                                  attrs = [#xmlattr{name = <<"xmlns">>, 
+                                                    value = ?NS_MUC_b}]
+                                 }
+                          );
 create_presence(Room, Nick, Password) ->
     BasePresence = exmpp_xml:set_attribute(?EMPTY_PRESENCE,
-					   <<"to">>,
-					   list_to_binary(Room ++ "/" ++ Nick)),
+                                           <<"to">>,
+                                           list_to_binary(Room ++ "/" ++ Nick)),
     PasswordElement = #xmlel{name = password,
-		      children = [#xmlcdata{cdata = Password}]},
+                             children = [#xmlcdata{cdata = Password}]},
     exmpp_xml:append_child(BasePresence,
-			   #xmlel{name = x, 
-				  attrs = [#xmlattr{name = <<"xmlns">>, 
-						    value = ?NS_MUC_b}],
-				  children = [PasswordElement]
-				 }
-			  ).
-    
+                           #xmlel{name = x, 
+                                  attrs = [#xmlattr{name = <<"xmlns">>, 
+                                                    value = ?NS_MUC_b}],
+                                  children = [PasswordElement]
+                                 }
+                          ).

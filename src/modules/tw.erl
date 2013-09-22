@@ -10,15 +10,15 @@ run(Twit) ->
     ConsumerSecret = proplists:get_value(consumer_secret, ApiConfig),
     AccessToken = proplists:get_value(access_token, ApiConfig),
     AccessTokenSecret = proplists:get_value(access_token_secret, ApiConfig),
-    
+
     Consumer = {ConsumerKey, ConsumerSecret, hmac_sha1},
 
     URL = "https://api.twitter.com/1.1/statuses/update.json",
 
     case oauth:post(URL, [{"status", Twit}], Consumer, AccessToken, AccessTokenSecret) of
-	{ok, _Response} ->
-	    Twit;
-	{errors, Error} ->
-	    ulog:info("Twitting failed with error: ~p", [Error]),
-	    "Something went wrong"
+        {ok, _Response} ->
+            Twit;
+        {errors, Error} ->
+            ulog:info("Twitting failed with error: ~p", [Error]),
+            "Something went wrong"
     end.
