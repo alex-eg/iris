@@ -1,11 +1,21 @@
 -module(qw).
--export([run/1, qw/1, qw/5]).
-%-behavior(iris_module).
+-export([run/1]).
+-behavior(iris_module).
 
 run("") ->
-    LastMessage = jid_worker:get_message("channel@conference.coderollers.com/ktt9", 1),
-    List = qw(LastMessage),
-    List.
+    qw_last_message(1);
+run("1") ->
+    qw_last_message(1);
+run("2") ->
+    qw_last_message(2);
+run("3") ->
+    qw_last_message(3);
+run(String) ->
+    qw(String).
+
+qw_last_message(Num) ->
+    LastMessage = jid_worker:get_message("channel@conference.coderollers.com/ktt9", Num),
+    qw(LastMessage).
 
 qw("") ->
     "";
