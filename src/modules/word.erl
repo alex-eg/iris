@@ -1,30 +1,16 @@
 -module(word).
--export([run/1]).
--export([shortcut/1]).
--compile(export_all).
+-export([run/2]).
 -behaviour(iris_module).
 
-run("") ->
+run("", _) ->
     "What is the sound of one hand clapping?";
-run(Args) ->
+run(Args, _) ->
     [{denshi_jisho, Config}] = gen_server:call(core, {get_config, denshi_jisho}),
     Base = proplists:get_value(request_url, Config),
     [Head|Tail] = string:tokens(Args, " "),
     QueryURL = make_request_url(Head, Tail, Base),
     {{_, 200, _}, _, Response} = gen_server:call(core, {get_http, QueryURL}),
     %% Here be dragons
-    Dom = mochiweb_html:parse(Response),
-    extract_info(Dom).
-
-shortcut(UnescapedArgs) ->
-    Args = binary_to_list(unicode:characters_to_binary(UnescapedArgs)),
-    application:start(inets),
-    Base = "http://jisho.org/words?jap=~s&eng=~s&dict=edict",
-    [Head|Tail] = string:tokens(Args, " "),
-    QueryURL = make_request_url(Head, Tail, Base),
-
-    {ok, {{_Version, 200, _ReasonPhrase}, _Headers, Response}} = httpc:request(QueryURL),
-
     Dom = mochiweb_html:parse(Response),
     extract_info(Dom).
 

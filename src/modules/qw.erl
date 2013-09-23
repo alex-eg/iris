@@ -1,20 +1,20 @@
 -module(qw).
--export([run/1]).
+-export([run/2]).
 -behavior(iris_module).
 
-run("") ->
-    qw_last_message(1);
-run("1") ->
-    qw_last_message(1);
-run("2") ->
-    qw_last_message(2);
-run("3") ->
-    qw_last_message(3);
-run(String) ->
+run("", From) ->
+    qw_last_message(1, From);
+run("1", From) ->
+    qw_last_message(1, From);
+run("2", From) ->
+    qw_last_message(2, From);
+run("3", From) ->
+    qw_last_message(3, From);
+run(String, _) ->
     qw(String).
 
-qw_last_message(Num) ->
-    LastMessage = jid_worker:get_message("channel@conference.coderollers.com/ktt9", Num),
+qw_last_message(Num, From) ->
+    LastMessage = jid_worker:get_message(From, Num),
     qw(LastMessage).
 
 qw("") ->

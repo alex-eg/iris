@@ -1,10 +1,10 @@
 -module(g).
--export([run/1]).
+-export([run/2]).
 -behavior(iris_module).
 
-run("") ->
+run("", _) ->
     "Nothing to search";
-run(Args) ->
+run(Args, _) ->
     [{google_search, SearchConfig}] = gen_server:call(core, {get_config, google_search}),
 
     EscapedQuery = http_uri:encode(Args),

@@ -1,10 +1,10 @@
 -module(tw).
--export([run/1]).
+-export([run/2]).
 -behavior(iris_module).
 
-run("") ->
+run("", _) ->
     "A hollow voice says, 'Fool'";
-run(Twit) ->
+run(Twit, _) ->
     [{twitter_api, ApiConfig}] = gen_server:call(core, {get_config, twitter_api}),
     ConsumerKey = proplists:get_value(consumer_key, ApiConfig),
     ConsumerSecret = proplists:get_value(consumer_secret, ApiConfig),
