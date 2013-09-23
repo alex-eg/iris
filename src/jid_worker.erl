@@ -130,9 +130,10 @@ process_message(groupchat, Packet, Config) ->
 
 process_groupchat(undefined, Packet, Config) ->
     Body = exmpp_message:get_body(Packet),
+    From = format_str("~s", [exmpp_xml:get_attribute(Packet, <<"from">>, undefined)]),
     Text = format_str("~s", [Body]),
     Match = re:run(Text, "^" ++ ?COMMAND_PREFIX ++ "(\\w*?)($| (.*)$)", [unicode]),
-    try process_command(Match, Text, Config) of
+    try process_command(Match, Text, Config, From) of
         nomatch -> ok;
         no_such_command -> ok;
         Reply when is_list(Reply) ->
@@ -156,15 +157,15 @@ process_chat(Packet, Config) ->
     ulog:debug("Sending packet back: ~p", [NewPacket]),
     gen_server:cast(self(), {send_packet, NewPacket}).
 
-process_command(nomatch, _, _) ->
+process_command(nomatch, _, _, _) ->
     nomatch;
-process_command({match, Match}, Text, Config) ->
+process_command({match, Match}, Text, Config, From) ->
     {ModuleName, ArgString} = extract_info(Match, Text),
     Module = list_to_atom(ModuleName),
     ModuleList = Config#jid_info.modules,
     ModuleExists = lists:member(Module, ModuleList),
     if ModuleExists ->
-            Result = Module:run(ArgString);
+            Result = Module:run(ArgString, From);
        not ModuleExists ->
             Result = no_such_command
     end,
