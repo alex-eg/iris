@@ -11,5 +11,11 @@ run(Args, _) ->
     Params = proplists:get_value(params, Config),
     [URL, CustomID] = string:tokens(Args, " "),
     EncodedURL = http_uri:encode(URL),
-    {ok, {{_Version, 200, _ReasonPhrase}, _Headers, Response}} = httpc:request(post, {Base, [{"User-Agent", "curl/7.32.0"}],  "application/x-www-form-urlencoded", io_lib:format(Params, [EncodedURL, CustomID])}, [], []),
-    Dom = mochiweb_html:parse(Response).
+    {{_, 200, _}, _, Response} = gen_server:call(core, {get_http, 
+                                                        post, 
+                                                        {Base, [{"User-Agent", "curl/7.32.0"}], 
+                                                         "application/x-www-form-urlencoded", 
+                                                         io_lib:format(Params, [EncodedURL, CustomID])}, 
+                                                        [], []}),
+    Dom = mochiweb_html:parse(Response),
+    "nipah~".
