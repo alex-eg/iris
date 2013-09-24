@@ -18,7 +18,8 @@
              word,
              iris_module,
              gelb,
-             qw
+             qw,
+             shrink
             ]},
   {mod, {iris,[]}},
   {applications, [kernel]},
