@@ -40,8 +40,8 @@ init(State) ->
 handle_call({get_config, Key}, _From, State) ->
     Reply = ets:lookup(config, Key),
     {reply, Reply, State};
-handle_call({get_http, Query}, _From, State) ->
-    try httpc:request(Query) of
+handle_call({get_http, Method, Request, HTTPOptions, Options}, _From, State) ->
+    try httpc:request(Method, Request, HTTPOptions, Options) of
         {ok, Response} ->
             Response,
             {reply, Response, State};
