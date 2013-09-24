@@ -12,17 +12,22 @@ OAuth protocol library by [erlang oauth](https://github.com/tim/erlang-oauth)
 API
 ---
 
-Modules must conform to the following template (which will eventually evolve into behaviour):
-
+Modules must conform to iris_module behaviour:
 ```erlang
 -module(default_module).
--export([run/1]).
+-export([run/2]).
+-behaviour(iris_module).
 
-run(ArgumentString) ->
+run(ArgumentString, SenderJidWithResource) ->
     ok.
 ```
 
-Iris' modules are text-processing modules, and are invoked when the bot recieves message starting with COMMAND_PREFIX character, defined in [xmpp.hrl file](https://github.com/taptap/iris/blob/master/include/xmpp.hrl). The only `run/1` command recieves the rest of the message (excluding prefix and command name) or an empty string. 
+Iris' modules are text-processing modules, and are invoked when the bot recieves message starting with COMMAND_PREFIX character, defined in [xmpp.hrl file](https://github.com/taptap/iris/blob/master/include/xmpp.hrl). The only `run/2` command recieves the rest of the message (excluding prefix and command name) or an empty string, and sender's JID with resource (which stands for nick in case of MUCs), for example: 
+
+        alice@example.com/microwave_oven
+
+        roomname@conference.example.com/Romeo
+        roomname@conference.example.com/Juliet
 
 Each parameter, which may be needed by the module, can be stored into main config file in a standart key-value way. Inside the module, you can access the parameter using
 
@@ -39,11 +44,12 @@ Configuration
 
 All configuration is stored in priv/cfg.erl file. Default/example configaration file is provided for your consideration: [default.cfg.erl](https://github.com/taptap/iris/blob/master/priv/default.cfg.erl), which is (hopefully) pretty self-explanatory.
 
-Each module and each plugin store it's configuration parameters inside cfg.erl file. This quite stupid way will change eventually in the future to improve incapsultaion, that is.
+Each module and each plugin store it's configuration parameters inside cfg.erl file.
 
-So, cfg.erl is a single list, containig key-value pairs, that is, cfg.erl is actually a proplist.
+So, cfg.erl is a single list, containig key-value pairs, that is, actually a proplist.
 
 Plugins
 -------
 
-I have no idea how to implement plugin system so far, but work is already in progress!
+Plugins are standalone processes, spawn for each jid worker which extend bot's functionality. 
+By now there is only one plugin (external interface), but some more are planned. Plugin API is believed to be based on hooks.
