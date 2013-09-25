@@ -26,7 +26,7 @@ init(State) ->
 
     %% Global config table, everyone can retrieve information from here
     %% Calling core server with get_info request
-    ConfigList = config:init("priv/cfg.erl"),
+    ConfigList = config:init(?CONFIG_FILE),
     ets:new(config, [named_table, bag]),
     lists:foreach(fun(X) ->
                           ets:insert(config, X)
