@@ -29,10 +29,10 @@ init(_Args) ->
      {
        {one_for_one, 10, 60},
        [{core,
-	 {core, start_link, [self()]},
-	 transient,
-	 10000,
-	 worker,
-	 [core]}]
+         {core, start_link, [self()]},
+         transient,
+         10000,
+         worker,
+         [core]}]
      }
     }.

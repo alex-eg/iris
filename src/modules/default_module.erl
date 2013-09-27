@@ -1,6 +1,6 @@
 -module(default_module).
--export([run/1]).
+-export([run/2]).
 -behaviour(iris_module).
 
-run(_ArgumentString) ->
+run(_ArgumentString, _SenderJidWithResource) ->
     ok.

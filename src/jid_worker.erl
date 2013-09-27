@@ -1,22 +1,27 @@
 -module(jid_worker).
 -behavior(gen_server).
+%% exntry point
 -export([start_link/2]).
+%% gen_server callbacks
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
+%% module API
+-export([get_message/2]).
 
 -include_lib("exmpp/include/exmpp_client.hrl").
 -include("xmpp.hrl").
 
 -record(state,
-	{name,
-	 config,
-	 session,
-	 peer_message_queues %% for storing messages from every peer (from inside room or from roster)
-	}).
+        {name,
+         config,
+         session,
+         message_queues % for storing participant messages
+        }).
 
 start_link(Config, Name) ->
     QueuesEts = ets:new(message_queues, 
     State = #state{name = Name,
-		   config = Config},
+                   config = Config
+                  },
     gen_server:start_link({local, Name}, ?MODULE, State, []).
 
 init(State) ->
@@ -24,22 +29,24 @@ init(State) ->
     Session = exmpp_session:start(),
     [Name, Server] = string:tokens(Config#jid_info.jid, "@"),
     Jid = exmpp_jid:make(Name,
-			 Server,
-			 Config#jid_info.resource),
+                         Server,
+                         Config#jid_info.resource),
     exmpp_session:auth_basic_digest(Session, Jid, Config#jid_info.password),
     {ok, _StreamID} = exmpp_session:connect_TCP(Session,
-						Server,
-						Config#jid_info.port),
+                                                Server,
+                                                Config#jid_info.port),
     exmpp_session:login(Session),
     exmpp_session:send_packet(Session,
-			      exmpp_presence:set_status(
-				exmpp_presence:available(),
-				Config#jid_info.status)
-			     ),
+                              exmpp_presence:set_status(
+                                exmpp_presence:available(),
+                                Config#jid_info.status)
+                             ),
     gen_server:cast(core, {connected, self(), State#state.name}),
     NewState = State#state{
-		 config = Config,
-		 session = Session},
+                 config = Config,
+                 session = Session,
+                 message_queues = ets:new(message_queues, [set, named_table])
+                },
     {ok, NewState}.
 
 handle_call(Any, _From, State) ->
@@ -51,9 +58,9 @@ handle_cast(join_rooms, State) ->
     Session = State#state.session,
     RoomList = config:get_room_list(Config),
     lists:foreach(fun(RoomTuple) ->
-			  muc_tools:join_groupchat(Session, RoomTuple)
-		  end,
-		  RoomList),
+                          muc_tools:join_groupchat(Session, RoomTuple)
+                  end,
+                  RoomList),
     gen_server:cast(self(), send_muc_keepalive),
     {noreply, State};
 handle_cast(send_muc_keepalive, State) ->
@@ -61,22 +68,23 @@ handle_cast(send_muc_keepalive, State) ->
     Session = State#state.session,
     RoomList = config:get_room_list(Config),
     lists:foreach(fun(RoomTuple) ->
-			  muc_tools:send_muc_keepalive(Session, RoomTuple)
-		  end,
-		  RoomList),
+                          muc_tools:send_muc_keepalive(Session, RoomTuple)
+                  end,
+                  RoomList),
     timer:apply_after(?REJOIN_TIMEOUT,
-		      gen_server,
-		      cast,
-		      [self(), send_muc_keepalive]
-		     ),
+                      gen_server,
+                      cast,
+                      [self(), send_muc_keepalive]
+                     ),
     {noreply, State};
 handle_cast({send_packet, Packet}, State) ->
     Session = State#state.session,
     exmpp_session:send_packet(Session, Packet),
     {noreply, State};
-handle_cast({add_message, Message, Sender}, State) ->
-    %% Add message to the end of the queue
-    OldQueue = State#
+handle_cast({store_message, Message, From}, State) ->
+    Queue = ets:lookup(message_queues, From),
+    update_queue(Queue, Message, From),
+    {noreply, State};
 handle_cast(Any, State) ->
     ulog:info("Recieved UNKNOWN cast: '~p'", [Any]),
     {noreply, State}.
@@ -93,6 +101,9 @@ handle_info(_Msg = #received_packet{packet_type = message, raw_packet = Packet},
     %%               Handlers)
     %% where ``Handlers'' is list of various packet handlers, such as command processor, logger, spam detector, and so on
     process_message(Type, Packet, Config),
+    From = format_str("~s", [exmpp_xml:get_attribute(Packet, <<"from">>, undefined)]),
+    Body = format_str("~s", [exmpp_message:get_body(Packet)]),
+    gen_server:cast(self(), {store_message, Body, From}),
     {noreply, State};
 handle_info(_Msg = #received_packet{packet_type = iq}, State) ->
     {noreply, State};
@@ -120,19 +131,20 @@ process_message(groupchat, Packet, Config) ->
 
 process_groupchat(undefined, Packet, Config) ->
     Body = exmpp_message:get_body(Packet),
+    From = format_str("~s", [exmpp_xml:get_attribute(Packet, <<"from">>, undefined)]),
     Text = format_str("~s", [Body]),
     Match = re:run(Text, "^" ++ ?COMMAND_PREFIX ++ "(\\w*?)($| (.*)$)", [unicode]),
-    try process_command(Match, Text, Config) of
-	nomatch -> ok;
-	no_such_command -> ok;
-	Reply when is_list(Reply) ->
-	    NewPacket = create_packet(groupchat, Reply, Packet, Config),
-	    gen_server:cast(self(), {send_packet, NewPacket})
+    try process_command(Match, Text, Config, From) of
+        nomatch -> ok;
+        no_such_command -> ok;
+        Reply when is_list(Reply) ->
+            NewPacket = create_packet(groupchat, Reply, Packet, Config),
+            gen_server:cast(self(), {send_packet, NewPacket})
     catch
-	error:Exception ->
-	    ulog:info("Caught exception while processing command '~s':~n~p~n"
-		      "Backtrace: ~p",
-		      [Text, Exception, erlang:get_stacktrace()])
+        error:Exception ->
+            ulog:info("Caught exception while processing command '~s':~n~p~n"
+                      "Backtrace: ~p",
+                      [Text, Exception, erlang:get_stacktrace()])
     end;
 process_groupchat(_Stamp, _Packet, _Config) ->
     ok.
@@ -145,25 +157,25 @@ process_chat(Packet, Config) ->
     NewPacket = create_packet(chat, Text, Packet, Config),
     ulog:debug("Sending packet back: ~p", [NewPacket]),
     gen_server:cast(self(), {send_packet, NewPacket}).
-    
-process_command(nomatch, _, _) ->
+
+process_command(nomatch, _, _, _) ->
     nomatch;
-process_command({match, Match}, Text, Config) ->
+process_command({match, Match}, Text, Config, From) ->
     {ModuleName, ArgString} = extract_info(Match, Text),
     Module = list_to_atom(ModuleName),
     ModuleList = Config#jid_info.modules,
     ModuleExists = lists:member(Module, ModuleList),
     if ModuleExists ->
-	    Result = Module:run(ArgString);
+            Result = Module:run(ArgString, From);
        not ModuleExists ->
-	    Result = no_such_command
+            Result = no_such_command
     end,
     Result.
 
 create_packet(Type, Reply, Incoming, Config) ->
     From = exmpp_xml:get_attribute(Incoming, <<"from">>, undefined),
     [Jid|ResourceList] = string:tokens(format_str("~s",[From]),"/"),
-    Resource = string:join(ResourceList, "/"),	% In case nick/resource contains '/' characters
+    Resource = string:join(ResourceList, "/"), % In case nick/resource contains '/' characters
     Sender = format_str("~s", [Config#jid_info.jid]),
     create_packet(Type, Jid, Resource, Sender, Reply).
 
@@ -181,6 +193,39 @@ create_packet(groupchat, Room, Nick, Sender, Reply) ->
     Packet3 = exmpp_xml:set_attribute(Packet2, <<"to">>, Reciever),
     Packet3.
 
+get_message(Peer, Pos) ->
+    QueueList = ets:lookup(message_queues, Peer),
+    case QueueList of
+        [] -> 
+            "No such participant";
+        [{Peer, Queue}] ->
+            get_nth_message(Queue, Pos)
+    end.
+
+update_queue([], Message, From) ->
+    Q = queue:new(),
+    Q1 = queue:in(Message, Q),
+    ets:insert_new(message_queues, {From, Q1});
+update_queue([{From, Q}], Message, From) ->
+    Q1 = make_new_queue(queue:len(Q), Q, Message),
+    ets:delete(message_queues, From),
+    ets:insert_new(message_queues, {From, Q1});
+update_queue(_, _, _) ->
+    ok.
+
+
+make_new_queue(Len, Q, Message) when Len >= ?QUEUE_SIZE ->
+    queue:in(Message, queue:drop(Q));
+make_new_queue(_, Q, Message) ->
+    queue:in(Message, Q).
+
+get_nth_message(Queue, Pos) ->
+    get_nth_message(Queue, Pos, queue:len(Queue)).
+
+get_nth_message(Queue, Pos, QLen) when QLen >= Pos ->
+    lists:nth(Pos, lists:reverse(queue:to_list(Queue)));
+get_nth_message(_, _, _) ->
+    "Wrong message position in queue".
 
 %% Local helpers below
 

@@ -6,19 +6,19 @@
 -define(TCP_OPTIONS, [binary, {packet, 0}, {active, false}, {reuseaddr, true}]).
 
 -record(state,
-	{supervisor,
-	 port = 21285,
-	 socket
-	}).
+        {supervisor,
+         port = 21285,
+         socket
+        }).
 
 start(Supervisor) ->
     {ok, _Pid} = supervisor:start_child(Supervisor,
-					{external_interface,
-					 {?MODULE, start_link, [Supervisor]},
-					 transient,
-					 5000,
-					 worker,
-					 [?MODULE]}).
+                                        {external_interface,
+                                         {?MODULE, start_link, [Supervisor]},
+                                         transient,
+                                         5000,
+                                         worker,
+                                         [?MODULE]}).
 start_link(Supervisor) ->
     State = #state{supervisor = Supervisor},
     gen_server:start_link({local, external_interface}, ?MODULE, State, []).
@@ -61,12 +61,9 @@ accept_loop(Server, LSocket, Subscriber) ->
 loop(Socket, Subscriber) ->
     case gen_tcp:recv(Socket, 0) of
         {ok, Data} ->
-	    ulog:info("Recieved data via socket: ~p", [Data]),
-	    gen_server:cast(Subscriber, {socket_recieved, Data}),
+            ulog:info("Recieved data via socket: ~p", [Data]),
+            gen_server:cast(Subscriber, {socket_recieved, Data}),
             loop(Socket, Subscriber);
         {error, closed} ->
             ok
     end.
-
-    
-    

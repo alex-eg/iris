@@ -2,7 +2,7 @@
 -export([behaviour_info/1]).
 
 behaviour_info(callbacks) ->
-    [{run, 1}];
+    [{run, 2}];
 behaviour_info(_) ->
     undefined.
 
