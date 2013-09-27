@@ -32,7 +32,6 @@ init(State) ->
                           ets:insert(config, X)
                   end,
                   ConfigList),
-    %% Place to store children's states
     ets:new(workers, [named_table, bag]),
     self() ! connect_plugins,
     {ok, State}.
