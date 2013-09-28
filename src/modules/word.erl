@@ -9,7 +9,7 @@ run(Args, _) ->
     Base = proplists:get_value(request_url, Config),
     [Head|Tail] = string:tokens(Args, " "),
     QueryURL = make_request_url(Head, Tail, Base),
-    {{_, 200, _}, _, Response} = gen_server:call(core, {get_http, get, QueryURL, [], []}),
+    {{_, 200, _}, _, Response} = gen_server:call(core, {get_http, get, {QueryURL, []}, [], []}),
     %% Here be dragons
     Dom = mochiweb_html:parse(Response),
     extract_info(Dom).

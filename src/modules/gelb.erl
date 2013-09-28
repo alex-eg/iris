@@ -3,10 +3,11 @@
 -behaviour(iris_module).
 
 run(_, _) ->
-    {ok, {_Status,
-          Headers,
-          _Body}} = httpc:request(get, {"http://gelbooru.com/index.php?page=post&s=random", []}, 
-                                  [{autoredirect, false}], 
-                                  []),
+    {_Status,
+     Headers,
+     _Body} = gen_server:call(core, 
+                              {get_http, get, {"http://gelbooru.com/index.php?page=post&s=random", []}, 
+                               [{autoredirect, false}], 
+                               []}),
     {_, URL} = lists:keyfind("location", 1, Headers),
     "http://gelbooru.com/" ++ URL.
