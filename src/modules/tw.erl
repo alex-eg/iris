@@ -19,6 +19,6 @@ run(Twit, _) ->
         {ok, _Response} ->
             Twit;
         {errors, Error} ->
-            ulog:info("Twitting failed with error: ~p", [Error]),
+            ulog:error("Twitting failed with error: ~p", [Error]),
             "Something went wrong"
     end.
