@@ -19,7 +19,8 @@
              iris_module,
              gelb,
              qw,
-             shrink
+             shrink,
+             log
             ]},
   {mod, {iris,[]}},
   {applications, [kernel]},
