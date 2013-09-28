@@ -14,7 +14,7 @@ parse(jid_config, {jid_config, Config}) ->
     {_, Resource} = init:script_id(),
     #jid_info {
        jid = proplists:get_value(jid, Config),
-       %%       resource = proplists:get_value(resource, Config),
+       %% resource = proplists:get_value(resource, Config),
        resource = Resource,
        status = proplists:get_value(status, Config),
        password = proplists:get_value(password, Config),

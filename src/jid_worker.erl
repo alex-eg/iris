@@ -18,6 +18,7 @@
         }).
 
 start_link(Config, Name) ->
+    QueuesEts = ets:new(message_queues, 
     State = #state{name = Name,
                    config = Config
                   },
@@ -88,7 +89,7 @@ handle_cast(Any, State) ->
     ulog:info("Recieved UNKNOWN cast: '~p'", [Any]),
     {noreply, State}.
 
-%% XMPP packages are handled via handle_info for some reason
+%% XMPP packets are handled via handle_info for some reason
 handle_info(_Msg = #received_packet{packet_type = message, raw_packet = Packet}, State) ->
     Type = exmpp_message:get_type(Packet), %% <- returns 'chat' or 'groupchat'
     %% Here starts actual messages' long journey through modules

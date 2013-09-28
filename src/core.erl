@@ -80,7 +80,6 @@ handle_info(connect_plugins, State = #state{supervisor = Sup}) ->
     {noreply, State};
 handle_info(start_children, State) ->
     ulog:info("Starting children"),
-
     Supervisor = State#state.supervisor,
     JidConfigList = ets:lookup(config, jid_config),
     lists:foreach(fun(ConfigEntry) ->
