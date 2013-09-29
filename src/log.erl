@@ -5,15 +5,17 @@
 -include("xmpp.hrl").
 
 -record(state, 
-        {log_file,
+        {log_dir,
          name
         }).
 
-start_link(LogFile, Name) ->
+start_link(LogDir, StringName) ->
+    Name = list_to_atom(StringName),
     State = #state{
-               log_file = LogFile,
+               log_dir = LogDir,
                name = Name
               },
+    ok = check_directory(LogDir),
     gen_server:start_link({local, Name}, ?MODULE, State, []).
    
 init(State) ->
