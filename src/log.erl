@@ -38,3 +38,26 @@ terminate(Reason, State) ->
 code_change(_OldVersion, State, _Extra) ->
     ulog:debug("Info log's code changed!"),
     {ok, State}.
+
+
+check_directory(LogDir) ->
+    DirStatus = file:make_dir(LogDir),
+    case DirStatus of
+        {error, eacces} ->
+            ulog:error("Missing search or write permissions for the parent directories of ~s.", [LogDir]),
+            error;
+        {error, eexist} ->
+            ok;
+        {error, enoent} ->
+            ulog:error("A component of ~s does not exist.", [LogDir]),
+            error;
+        {error, enospc} ->
+            ulog:error("No space left on the device."),
+            error;
+        {error, enotdir} ->
+            ulog:error("A component of ~s is not a directory.", [LogDir]),
+            error;
+        ok ->
+            ok
+    end.
+        
