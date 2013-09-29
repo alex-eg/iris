@@ -18,7 +18,6 @@
         }).
 
 start_link(Config, Name) ->
-    QueuesEts = ets:new(message_queues, 
     State = #state{name = Name,
                    config = Config
                   },
