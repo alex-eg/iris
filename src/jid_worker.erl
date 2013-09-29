@@ -40,12 +40,14 @@ init(State) ->
                                 exmpp_presence:available(),
                                 Config#jid_info.status)
                              ),
-    gen_server:cast(core, {connected, self(), State#state.name}),
     NewState = State#state{
                  config = Config,
                  session = Session,
                  message_queues = ets:new(message_queues, [set, named_table])
                 },
+    log:start_link(?LOG_DIR ++ "/" ++ atom_to_list(State#state.name),
+                   atom_to_list(State#state.name) ++ "_logger"),
+    gen_server:cast(core, {connected, self(), State#state.name}),
     {ok, NewState}.
 
 handle_call(Any, _From, State) ->
