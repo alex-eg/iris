@@ -123,7 +123,7 @@ start_worker(Config, Supervisor) ->
 start_plugin(Plugin, Supervisor) ->
     try Plugin:start(Supervisor) of
         {ok, Pid} ->
-            ulog:info("~p started with pid ~p", [Plugin, Pid]),
+            ulog:info("Plugin ~p started with pid ~p", [Plugin, Pid]),
             ok
     catch
         error:Exception ->
