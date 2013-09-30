@@ -24,6 +24,9 @@ init(State) ->
 handle_call(_Any, _From, State) ->
     {noreply, State}.
 
+handle_cast({store_message, Message}, State) ->
+    store_message(Message),
+    {noreply, State};
 handle_cast(_Any, State) ->
     {noreply, State}.
 
@@ -61,3 +64,5 @@ check_directory(LogDir) ->
             ok
     end.
         
+store_message(Message) ->
+    ok.
