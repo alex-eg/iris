@@ -95,12 +95,6 @@ handle_info(_Msg = #received_packet{packet_type = message, raw_packet = Packet},
     Type = exmpp_message:get_type(Packet), %% <- returns 'chat' or 'groupchat'
     %% Here starts actual messages' long journey through modules
     Config = State#state.config,
-    %% TODO: Hooks -- 
-    %% lists:foreach(fun(F) ->
-    %%                      F(Type, Packet, Config)
-    %%               end,
-    %%               Handlers)
-    %% where ``Handlers'' is list of various packet handlers, such as command processor, logger, spam detector, and so on
     process_message(Type, Packet, Config),
     From = format_str("~s", [exmpp_xml:get_attribute(Packet, <<"from">>, undefined)]),
     Body = format_str("~s", [exmpp_message:get_body(Packet)]),
