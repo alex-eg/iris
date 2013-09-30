@@ -98,10 +98,10 @@ handle_info(_Msg = #received_packet{packet_type = message, raw_packet = Packet},
     %% Here starts actual messages' long journey through modules
     Config = State#state.config,
     process_message(Type, Packet, Config),
-    gen_server:cast(State#state.logger_server, {store_message, Message}),
     From = format_str("~s", [exmpp_xml:get_attribute(Packet, <<"from">>, undefined)]),
     Body = format_str("~s", [exmpp_message:get_body(Packet)]),
     gen_server:cast(self(), {store_message, Body, From}),
+    gen_server:cast(State#state.logger_server, {store_message, Packet}),
     {noreply, State};
 handle_info(_Msg = #received_packet{packet_type = iq}, State) ->
     {noreply, State};
