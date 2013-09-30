@@ -14,6 +14,7 @@
         {name,
          config,
          session,
+	 logger_server,
          message_queues % for storing participant messages
         }).
 
