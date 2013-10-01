@@ -60,4 +60,3 @@ check_directory(LogDir) ->
         ok ->
             ok
     end.
-        
