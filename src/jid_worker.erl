@@ -14,6 +14,7 @@
         {name,
          config,
          session,
+	 logger_server,
          message_queues % for storing participant messages
         }).
 
@@ -40,13 +41,14 @@ init(State) ->
                                 exmpp_presence:available(),
                                 Config#jid_info.status)
                              ),
+    {ok, LoggerPID} = log:start_link(?LOG_DIR ++ "/" ++ atom_to_list(State#state.name),
+				     atom_to_list(State#state.name) ++ "_logger"),
     NewState = State#state{
                  config = Config,
                  session = Session,
+		 logger_server = LoggerPID,
                  message_queues = ets:new(message_queues, [set, named_table])
                 },
-    log:start_link(?LOG_DIR ++ "/" ++ atom_to_list(State#state.name),
-                   atom_to_list(State#state.name) ++ "_logger"),
     gen_server:cast(core, {connected, self(), State#state.name}),
     {ok, NewState}.
 
@@ -95,16 +97,11 @@ handle_info(_Msg = #received_packet{packet_type = message, raw_packet = Packet},
     Type = exmpp_message:get_type(Packet), %% <- returns 'chat' or 'groupchat'
     %% Here starts actual messages' long journey through modules
     Config = State#state.config,
-    %% TODO: Hooks -- 
-    %% lists:foreach(fun(F) ->
-    %%                      F(Type, Packet, Config)
-    %%               end,
-    %%               Handlers)
-    %% where ``Handlers'' is list of various packet handlers, such as command processor, logger, spam detector, and so on
     process_message(Type, Packet, Config),
     From = format_str("~s", [exmpp_xml:get_attribute(Packet, <<"from">>, undefined)]),
     Body = format_str("~s", [exmpp_message:get_body(Packet)]),
     gen_server:cast(self(), {store_message, Body, From}),
+    gen_server:cast(State#state.logger_server, {store_message, Packet}),
     {noreply, State};
 handle_info(_Msg = #received_packet{packet_type = iq}, State) ->
     {noreply, State};
