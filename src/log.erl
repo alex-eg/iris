@@ -44,6 +44,7 @@ code_change(_OldVersion, State, _Extra) ->
 
 
 check_directory(LogDir) ->
+    filelib:ensure_dir(LogDir),
     DirStatus = file:make_dir(LogDir),
     case DirStatus of
         {error, eacces} ->
