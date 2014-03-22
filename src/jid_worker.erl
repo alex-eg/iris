@@ -26,16 +26,16 @@ start_link(Config, Name) ->
 
 init(State) ->
     Config = State#state.config,
-    Session = exmpp_session:start(),
+    Session = exmpp_session:start({1, 0}),
     [Name, Server] = string:tokens(Config#jid_info.jid, "@"),
     Jid = exmpp_jid:make(Name,
                          Server,
                          Config#jid_info.resource),
-    exmpp_session:auth_basic_digest(Session, Jid, Config#jid_info.password),
-    {ok, _StreamID} = exmpp_session:connect_TCP(Session,
-                                                Server,
-                                                Config#jid_info.port),
-    exmpp_session:login(Session),
+    exmpp_session:auth_info(Session, Jid, Config#jid_info.password),
+    {ok, _StreamID, Features} = exmpp_session:connect_TCP(Session,
+                                                          Server,
+                                                          Config#jid_info.port),
+    exmpp_session:login(Session, "DIGEST-MD5"),
     exmpp_session:send_packet(Session,
                               exmpp_presence:set_status(
                                 exmpp_presence:available(),
