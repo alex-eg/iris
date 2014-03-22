@@ -32,9 +32,9 @@ init(State) ->
                          Server,
                          Config#jid_info.resource),
     exmpp_session:auth_info(Session, Jid, Config#jid_info.password),
-    {ok, _StreamID, Features} = exmpp_session:connect_TCP(Session,
-                                                          Server,
-                                                          Config#jid_info.port),
+    {ok, _StreamID, _Features} = exmpp_session:connect_TCP(Session,
+                                                           Server,
+                                                           Config#jid_info.port),
     exmpp_session:login(Session, "DIGEST-MD5"),
     exmpp_session:send_packet(Session,
                               exmpp_presence:set_status(
