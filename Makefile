@@ -18,7 +18,8 @@ compile:
 
 modules:
 	rebar get-deps
-	erlc -I ./include -pa ./ebin -o ./ebin ./src/behaviours/*.erl ./src/modules/*.erl
+	erlc -I ./include -o ./ebin ./src/behaviours/*.erl
+	erlc -I ./include -pa ./ebin -o ./ebin ./src/modules/*.erl
 
 debug: all
 	cd ebin
