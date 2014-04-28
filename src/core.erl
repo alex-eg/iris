@@ -33,25 +33,12 @@ init(State) ->
                   end,
                   ConfigList),
     ets:new(workers, [named_table, bag]),
-    self() ! connect_plugins,
+    self() ! connect_global_modules,
     {ok, State}.
 
 handle_call({get_config, Key}, _From, State) ->
     Reply = ets:lookup(config, Key),
     {reply, Reply, State};
-handle_call({get_http, Method, Request, HTTPOptions, Options}, _From, State) ->
-    try httpc:request(Method, Request, HTTPOptions, Options) of
-        {ok, Response} ->
-            Response,
-            {reply, Response, State};
-        Any ->
-            ulog:info("Request failed: ~p", [Any]),
-            {reply, error, State}
-    catch
-        error:Exception ->
-            ulog:info("Exception ~p occcured!", [Exception]),
-            {reply, error, State}
-    end;
 handle_call(Any, _Caller, State) -> 
     ulog:info("Recieved UNKNOWN request: ~p", [Any]),
     {noreply, State}.
@@ -70,12 +57,16 @@ handle_cast(Any, State) ->
     ulog:info("Recieved UNKNOWN cast: '~p'", [Any]),
     {noreply, State}.
 
-handle_info(connect_plugins, State = #state{supervisor = Sup}) ->
-    [{plugins, List}] = ets:lookup(config, plugins),
+handle_info(connect_global_modules, State = #state{supervisor = Sup}) ->
+    [{modules, List}] = ets:lookup(config, plugins),
+    GlobalModules = lists:filter(fun(Module) ->
+                                         Module:module_level == 'global_module'
+                                 end,
+                                 List),
     lists:foreach(fun(Plugin) ->
                           start_plugin(Plugin, Sup)
                   end,
-                  List),
+                  GlobalModules),
     self() ! start_children,
     {noreply, State};
 handle_info(start_children, State) ->
