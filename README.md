@@ -1,7 +1,7 @@
 IRIS
 ====
 
-Iris is a scalable jabber bot.
+Iris is a ~~scalable jabber bot.~~ a bunch of crap. Disregard this readme.
 
 JSON processing by [iskra's jsonx module](https://github.com/iskra/jsonx)
 
