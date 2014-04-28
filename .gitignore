@@ -1,5 +1,4 @@
 cfg.erl
 *~
-ebin/*.beam
 deps
 *.dump
