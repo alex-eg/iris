@@ -16,7 +16,5 @@
 
 -define(EMPTY_PRESENCE, #xmlel{name = 'presence'}).
 -define(REJOIN_TIMEOUT, 30000). 
--define(COMMAND_PREFIX, "@").
--define(QUEUE_SIZE, 10). % store last 10 messages per peer
--define(CONFIG_FILE, "priv/cfg.erl").
--define(LOG_DIR, "logs").
+-define(DEFAULT_COMMAND_PREFIX, "@").
+-define(DEFAULT_CONFIG_FILE, "priv/cfg.erl").

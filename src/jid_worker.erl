@@ -108,7 +108,7 @@ process_groupchat(undefined, Packet, Config) ->
     Body = exmpp_message:get_body(Packet),
     From = format_str("~s", [exmpp_xml:get_attribute(Packet, <<"from">>, undefined)]),
     Text = format_str("~s", [Body]),
-    Match = re:run(Text, "^" ++ ?COMMAND_PREFIX ++ "(\\w*?)($| (.*)$)", [unicode]),
+    Match = re:run(Text, "^" ++ ?DEFAULT_COMMAND_PREFIX ++ "(\\w*?)($| (.*)$)", [unicode]),
     try process_command(Match, Text, Config, From) of
         nomatch -> ok;
         no_such_command -> ok;
