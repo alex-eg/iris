@@ -25,7 +25,7 @@ qw(String) ->
     Ru = unicode:characters_to_list(<<"йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,">>),
     [H|_] = UnicodeString,
     InEnglish = lists:member(H, En), %% if true, performing English to Russian conversion
-    %% Suddenly! Lisp 
+    %% Suddenly! Lisp
     binary_to_list(
       unicode:characters_to_binary(
         qw(UnicodeString, InEnglish, En, Ru, ""))).
