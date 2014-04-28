@@ -67,3 +67,37 @@ check_directory(LogDir) ->
         
 store_message(Message) ->
     ok.
+
+get_message(Peer, Pos) ->
+    QueueList = ets:lookup(message_queues, Peer),
+    case QueueList of
+        [] ->
+            "No such participant";
+        [{Peer, Queue}] ->
+            get_nth_message(Queue, Pos)
+    end.
+
+update_queue([], Message, From) ->
+    Q = queue:new(),
+    Q1 = queue:in(Message, Q),
+    ets:insert_new(message_queues, {From, Q1});
+update_queue([{From, Q}], Message, From) ->
+    Q1 = make_new_queue(queue:len(Q), Q, Message),
+    ets:delete(message_queues, From),
+    ets:insert_new(message_queues, {From, Q1});
+update_queue(_, _, _) ->
+    ok.
+
+
+make_new_queue(Len, Q, Message) when Len >= ?QUEUE_SIZE ->
+    queue:in(Message, queue:drop(Q));
+make_new_queue(_, Q, Message) ->
+    queue:in(Message, Q).
+
+get_nth_message(Queue, Pos) ->
+    get_nth_message(Queue, Pos, queue:len(Queue)).
+
+get_nth_message(Queue, Pos, QLen) when QLen >= Pos ->
+    lists:nth(Pos, lists:reverse(queue:to_list(Queue)));
+get_nth_message(_, _, _) ->
+    "Wrong message position in queue".

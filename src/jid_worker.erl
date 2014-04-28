@@ -1,11 +1,10 @@
 -module(jid_worker).
 -behavior(gen_server).
-%% exntry point
+%% entry point
 -export([start_link/2]).
 %% gen_server callbacks
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 %% module API
--export([get_message/2]).
 
 -include_lib("exmpp/include/exmpp_client.hrl").
 -include("xmpp.hrl").
@@ -13,9 +12,7 @@
 -record(state,
         {name,
          config,
-         session,
-	 logger_server,
-         message_queues % for storing participant messages
+         session
         }).
 
 start_link(Config, Name) ->
@@ -26,7 +23,7 @@ start_link(Config, Name) ->
 
 init(State) ->
     Config = State#state.config,
-    Session = exmpp_session:start({1, 0}),
+    Session = exmpp_session:start({1, 0}), %% retardation needed to start SSL authorization
     [Name, Server] = string:tokens(Config#jid_info.jid, "@"),
     Jid = exmpp_jid:make(Name,
                          Server,
@@ -41,13 +38,9 @@ init(State) ->
                                 exmpp_presence:available(),
                                 Config#jid_info.status)
                              ),
-    {ok, LoggerPID} = log:start_link(?LOG_DIR ++ "/" ++ atom_to_list(State#state.name),
-				     atom_to_list(State#state.name) ++ "_logger"),
     NewState = State#state{
                  config = Config,
-                 session = Session,
-		 logger_server = LoggerPID,
-                 message_queues = ets:new(message_queues, [set, named_table])
+                 session = Session
                 },
     gen_server:cast(core, {connected, self(), State#state.name}),
     {ok, NewState}.
@@ -67,26 +60,11 @@ handle_cast(join_rooms, State) ->
     gen_server:cast(self(), send_muc_keepalive),
     {noreply, State};
 handle_cast(send_muc_keepalive, State) ->
-    Config = State#state.config,
-    Session = State#state.session,
-    RoomList = config:get_room_list(Config),
-    lists:foreach(fun(RoomTuple) ->
-                          muc_tools:send_muc_keepalive(Session, RoomTuple)
-                  end,
-                  RoomList),
-    timer:apply_after(?REJOIN_TIMEOUT,
-                      gen_server,
-                      cast,
-                      [self(), send_muc_keepalive]
-                     ),
+    %% whitespace ping goes here
     {noreply, State};
 handle_cast({send_packet, Packet}, State) ->
     Session = State#state.session,
     exmpp_session:send_packet(Session, Packet),
-    {noreply, State};
-handle_cast({store_message, Message, From}, State) ->
-    Queue = ets:lookup(message_queues, From),
-    update_queue(Queue, Message, From),
     {noreply, State};
 handle_cast(Any, State) ->
     ulog:info("Recieved UNKNOWN cast: '~p'", [Any]),
@@ -98,10 +76,9 @@ handle_info(_Msg = #received_packet{packet_type = message, raw_packet = Packet},
     %% Here starts actual messages' long journey through modules
     Config = State#state.config,
     process_message(Type, Packet, Config),
-    From = format_str("~s", [exmpp_xml:get_attribute(Packet, <<"from">>, undefined)]),
-    Body = format_str("~s", [exmpp_message:get_body(Packet)]),
-    gen_server:cast(self(), {store_message, Body, From}),
-    gen_server:cast(State#state.logger_server, {store_message, Packet}),
+    %% variables below kept for future hooking system
+    _From = format_str("~s", [exmpp_xml:get_attribute(Packet, <<"from">>, undefined)]),
+    _Body = format_str("~s", [exmpp_message:get_body(Packet)]),
     {noreply, State};
 handle_info(_Msg = #received_packet{packet_type = iq}, State) ->
     {noreply, State};
@@ -191,40 +168,6 @@ create_packet(groupchat, Room, Nick, Sender, Reply) ->
     Packet3 = exmpp_xml:set_attribute(Packet2, <<"to">>, Reciever),
     Packet3.
 
-get_message(Peer, Pos) ->
-    QueueList = ets:lookup(message_queues, Peer),
-    case QueueList of
-        [] -> 
-            "No such participant";
-        [{Peer, Queue}] ->
-            get_nth_message(Queue, Pos)
-    end.
-
-update_queue([], Message, From) ->
-    Q = queue:new(),
-    Q1 = queue:in(Message, Q),
-    ets:insert_new(message_queues, {From, Q1});
-update_queue([{From, Q}], Message, From) ->
-    Q1 = make_new_queue(queue:len(Q), Q, Message),
-    ets:delete(message_queues, From),
-    ets:insert_new(message_queues, {From, Q1});
-update_queue(_, _, _) ->
-    ok.
-
-
-make_new_queue(Len, Q, Message) when Len >= ?QUEUE_SIZE ->
-    queue:in(Message, queue:drop(Q));
-make_new_queue(_, Q, Message) ->
-    queue:in(Message, Q).
-
-get_nth_message(Queue, Pos) ->
-    get_nth_message(Queue, Pos, queue:len(Queue)).
-
-get_nth_message(Queue, Pos, QLen) when QLen >= Pos ->
-    lists:nth(Pos, lists:reverse(queue:to_list(Queue)));
-get_nth_message(_, _, _) ->
-    "Wrong message position in queue".
-
 %% Local helpers below
 
 format_str(Format, Data) ->
@@ -237,4 +180,3 @@ extract_info([_, {ModuleStart, ModuleLength}, {ArgStart, ArgLength}, _], Text) -
     Module = lists:sublist(Text, ModuleStart + 1, ModuleLength),
     Argument = string:strip(lists:sublist(Text, ArgStart + 1, ArgLength)),
     {Module, Argument}.
-
