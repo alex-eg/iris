@@ -31,7 +31,7 @@ get_room_list(#jid_info{rooms = RoomList}) ->
                  tuple_size(RoomTuple) == 3 ->
                       {Room, Nick, Password} = RoomTuple,
                       {Room, Nick, Password};
-                 true -> 
+                 true ->
                       ulog:error("Bad Room Tuple ~p", [RoomTuple]),
                       error
               end
