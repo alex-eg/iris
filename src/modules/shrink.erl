@@ -20,7 +20,7 @@ parse([URL], Base, Params) ->
                                                          "application/x-www-form-urlencoded",
                                                          "fUrl=" ++ EncodedURL ++ "&id="},
                                                         [], []}),
-    {[{<<"result">>, {Response}}]} = jsonx:decode(list_to_binary(ResponseJSON)),
+    {[{<<"result">>, {Response}}]} = jiffy:decode(list_to_binary(ResponseJSON)),
     {_, Result} = lists:keyfind(<<"generated">>, 1, Response),
     binary_to_list(Result).
     
