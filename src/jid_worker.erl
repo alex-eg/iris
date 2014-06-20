@@ -46,7 +46,7 @@ init(State) ->
     {ok, NewState}.
 
 handle_call(Any, _From, State) ->
-    ulog:info("Recieved UNKNOWN request: ~p", [Any]),
+    ulog:info("Recieved unknown call: ~p", [Any]),
     {noreply, State}.
 
 handle_cast(join_rooms, State) ->
@@ -60,32 +60,28 @@ handle_cast(join_rooms, State) ->
     gen_server:cast(self(), send_muc_keepalive),
     {noreply, State};
 handle_cast(send_muc_keepalive, State) ->
-    %% whitespace ping goes here
+    %% TODD: whitespace ping goes here
     {noreply, State};
 handle_cast({send_packet, Packet}, State) ->
     Session = State#state.session,
     exmpp_session:send_packet(Session, Packet),
     {noreply, State};
 handle_cast(Any, State) ->
-    ulog:info("Recieved UNKNOWN cast: '~p'", [Any]),
+    ulog:info("Recieved unknown cast: '~p'", [Any]),
     {noreply, State}.
 
 %% XMPP packets are handled via handle_info for some reason
-handle_info(_Msg = #received_packet{packet_type = message, raw_packet = Packet}, State) ->
-    Type = exmpp_message:get_type(Packet), %% <- returns 'chat' or 'groupchat'
-    %% Here starts actual messages' long journey through modules
+handle_info(#received_packet{packet_type = message, raw_packet = Packet}, State) ->
+    Message = message:create(Packet),
+    %% Here starts actual messages' long journey through all modules
     Config = State#state.config,
     process_message(Type, Packet, Config),
-    %% variables below kept for future hooking system
-    _From = format_str("~s", [exmpp_xml:get_attribute(Packet, <<"from">>, undefined)]),
-    _Body = format_str("~s", [exmpp_message:get_body(Packet)]),
     {noreply, State};
-handle_info(_Msg = #received_packet{packet_type = iq}, State) ->
-    {noreply, State};
-handle_info(_Msg = #received_packet{packet_type = presence}, State) ->
+handle_info(#received_packet{packet_type = PacketType}, State) ->
+    ulog:info("Resieved XMPP packet of type ~s", [PacketType]),
     {noreply, State};
 handle_info(Msg, State) -> 
-    ulog:info("Recieved UNKNOWN message: '~p'", [Msg]),
+    ulog:info("Recieved unknown message: '~p'", [Msg]),
     {noreply, State}.
 
 terminate(Reason, State) ->
@@ -98,7 +94,7 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 %% gen_server callbacks end
 
 process_message(chat, Packet, Config) ->
-    %% FUTURE: add ignore list to forbid unwanted individuals calling modules
+    %% TODO: add ignore list to forbid unwanted individuals calling modules
     process_chat(Packet, Config);
 process_message(groupchat, Packet, Config) ->
     Stamp = exmpp_xml:get_element(Packet, delay),
