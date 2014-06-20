@@ -1,6 +1,6 @@
 -module(gelb).
 -export([run/2]).
--behaviour(iris_module).
+-behaviour(iris_command).
 
 run(_, _) ->
     {_Status,

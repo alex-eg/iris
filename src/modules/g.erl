@@ -1,6 +1,6 @@
 -module(g).
 -export([run/2]).
--behavior(iris_module).
+-behavior(iris_command).
 
 run("", _) ->
     "Nothing to search";

@@ -1,6 +1,6 @@
 -module(tw).
 -export([run/2]).
--behavior(iris_module).
+-behavior(iris_command).
 
 run("", _) ->
     "A hollow voice says, 'Fool'";

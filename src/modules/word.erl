@@ -1,6 +1,6 @@
 -module(word).
 -export([run/2]).
--behaviour(iris_module).
+-behaviour(iris_command).
 
 run("", _) ->
     "What is the sound of one hand clapping?";

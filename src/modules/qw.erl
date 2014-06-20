@@ -1,6 +1,6 @@
 -module(qw).
 -export([run/2]).
--behavior(iris_module).
+-behavior(iris_command).
 
 run("", From) ->
     qw_last_message(1, From);
