@@ -1,10 +1,10 @@
 -module(room_config).
--export(create/5, jid/1, nick/1, modules/1, logging/1, banlist/1).
+-export([create/5, jid/1, nick/1, commands/1, logging/1, banlist/1]).
 
-create(Jid, Nick, Modules, Logging, Banlist) ->
+create(Jid, Nick, Commands, Logging, Banlist) ->
     #{jid => Jid,
       nick => Nick,
-      modules => Modules,
+      commands => Commands,
       logging => Logging,
       banlist => Banlist}.
 
@@ -14,8 +14,8 @@ jid(Config) ->
 nick(Config) ->
     maps:get(nick, Config).
 
-modules(Config) ->
-    maps:get(modules, Config).
+commands(Config) ->
+    maps:get(commands, Config).
 
 logging(Config) ->
     maps:get(logging, Config).

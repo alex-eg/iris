@@ -1,5 +1,5 @@
 -module(jid_config).
--export([create/6]).
+-export([create/7]).
 -export([port/1, jid/1, resource/1, status/1, password/1, room_confs/1, modules/1]).
 
 create(Port, Jid, Status, Resource, Password, RoomConfs, Modules) ->
