@@ -23,7 +23,7 @@ parse(jid_config, {jid_config, Config}) ->
 
 parse(room_config, {Jid, Config}) ->
     Nick = proplists:get_value(nick, Config),
-    Modules = proplists:get_value(modules, Config),
+    Commands = proplists:get_value(commands, Config),
     Logging = proplists:get_value(logging, Config),
     Banlist = proplists:get_value(banlist, Config),
-    room_config:create(Jid, Nick, Modules, Logging, Banlist).
+    room_config:create(Jid, Nick, Commands, Logging, Banlist).
