@@ -24,19 +24,19 @@ start_link(Config, Name) ->
 init(State) ->
     Config = State#state.config,
     Session = exmpp_session:start({1, 0}), %% retardation needed to start SSL authorization
-    [Name, Server] = string:tokens(Config#jid_info.jid, "@"),
+    [Name, Server] = string:tokens(jid_info:jid(Config), "@"),
     Jid = exmpp_jid:make(Name,
                          Server,
-                         Config#jid_info.resource),
-    exmpp_session:auth_info(Session, Jid, Config#jid_info.password),
+                         jid_info:resource(Config)),
+    exmpp_session:auth_info(Session, Jid, jid_info:password(Config)),
     {ok, _StreamID, _Features} = exmpp_session:connect_TCP(Session,
                                                            Server,
-                                                           Config#jid_info.port),
+                                                           jid_info:port(Config)),
     exmpp_session:login(Session, "DIGEST-MD5"),
     exmpp_session:send_packet(Session,
                               exmpp_presence:set_status(
                                 exmpp_presence:available(),
-                                Config#jid_info.status)
+                                jid_info:status(Config))
                              ),
     NewState = State#state{
                  config = Config,
@@ -75,7 +75,7 @@ handle_info(#received_packet{packet_type = message, raw_packet = Packet}, State)
     Message = message:create(Packet),
     %% Here starts actual messages' long journey through all modules
     Config = State#state.config,
-    process_message(Type, Packet, Config),
+    process_message(message:type(Message), Packet, Config),
     {noreply, State};
 handle_info(#received_packet{packet_type = PacketType}, State) ->
     ulog:info("Resieved XMPP packet of type ~s", [PacketType]),
@@ -134,7 +134,7 @@ process_command(nomatch, _, _, _) ->
 process_command({match, Match}, Text, Config, From) ->
     {ModuleName, ArgString} = extract_info(Match, Text),
     Module = list_to_atom(ModuleName),
-    ModuleList = Config#jid_info.modules,
+    ModuleList = jid_info:modules(Config),
     ModuleExists = lists:member(Module, ModuleList),
     if ModuleExists ->
             Result = Module:run(ArgString, From);

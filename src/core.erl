@@ -58,15 +58,6 @@ handle_cast(Any, State) ->
     {noreply, State}.
 
 handle_info(connect_global_modules, State = #state{supervisor = Sup}) ->
-    [{modules, List}] = ets:lookup(config, plugins),
-    GlobalModules = lists:filter(fun(Module) ->
-                                         Module:module_level == 'global_module'
-                                 end,
-                                 List),
-    lists:foreach(fun(Plugin) ->
-                          start_plugin(Plugin, Sup)
-                  end,
-                  GlobalModules),
     self() ! start_children,
     {noreply, State};
 handle_info(start_children, State) ->
@@ -101,7 +92,7 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 %% gen_server callbacks end
 
 start_worker(Config, Supervisor) ->
-    Name = list_to_atom(Config#jid_info.jid),
+    Name = list_to_atom(jid_info:jid(Config)),
     ulog:info("Starting worker ~p with supervisor ~p", [Name, Supervisor]),
     {ok, _Pid} = supervisor:start_child(Supervisor,
                                         {Name,
