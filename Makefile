@@ -16,10 +16,17 @@ compile:
 	rebar get-deps
 	rebar compile
 
-modules:
+deps:
+	rebar get-deps
+
+modules: deps behaviours
 	rebar get-deps
 	erlc -I ./include -o ./ebin ./src/behaviours/*.erl
 	erlc -I ./include -pa ./ebin -o ./ebin ./src/modules/*.erl
+
+commands:
+	rebar get-deps
+	erlc -I ./include -o ./ebin ./src/commands/*.erl
 
 debug: all
 	cd ebin

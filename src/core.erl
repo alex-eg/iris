@@ -40,7 +40,7 @@ handle_call({get_config, Key}, _From, State) ->
     Reply = ets:lookup(config, Key),
     {reply, Reply, State};
 handle_call(Any, _Caller, State) -> 
-    ulog:info("Recieved UNKNOWN request: ~p", [Any]),
+    ulog:info("Recieved unknown request: ~p", [Any]),
     {noreply, State}.
 
 handle_cast({connected, From, Name}, State) ->
@@ -54,7 +54,7 @@ handle_cast({terminated, From, Reason}, State) ->
     ets:delete_object(workers, {From, Name}),
     {noreply, State};
 handle_cast(Any, State) ->
-    ulog:info("Recieved UNKNOWN cast: '~p'", [Any]),
+    ulog:info("Recieved unknown cast: '~p'", [Any]),
     {noreply, State}.
 
 handle_info(connect_global_modules, State = #state{supervisor = Sup}) ->
@@ -72,7 +72,7 @@ handle_info(start_children, State) ->
                   JidConfigList),
     {noreply, State};
 handle_info(_Msg, State) -> 
-    ulog:info("Recieved UNKNOWN message: ~p~n", [_Msg]),
+    ulog:info("Recieved unknown message: ~p~n", [_Msg]),
     {noreply, State}.
 
 terminate(_Reason, State) ->
