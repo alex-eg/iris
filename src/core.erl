@@ -25,15 +25,15 @@ init(State) ->
     ulog:info("Root node started and has PID ~p, supervisor process is ~p", [self(), SupervisorPid]),
 
     %% Global config table, everyone can retrieve information from here
-    %% Calling core server with get_info request
-    ConfigList = config:init(?DEFAULT_CONFIG_FILE),
+    %% calling core server with get_info request
+    ConfigList = config:read(?DEFAULT_CONFIG_FILE),
     ets:new(config, [named_table, bag]),
     lists:foreach(fun(X) ->
                           ets:insert(config, X)
                   end,
                   ConfigList),
     ets:new(workers, [named_table, bag]),
-    self() ! connect_global_modules,
+    self() ! start_children,
     {ok, State}.
 
 handle_call({get_config, Key}, _From, State) ->
@@ -57,17 +57,15 @@ handle_cast(Any, State) ->
     ulog:info("Recieved unknown cast: '~p'", [Any]),
     {noreply, State}.
 
-handle_info(connect_global_modules, State = #state{supervisor = Sup}) ->
-    self() ! start_children,
-    {noreply, State};
 handle_info(start_children, State) ->
     ulog:info("Starting children"),
     Supervisor = State#state.supervisor,
-    JidConfigList = ets:lookup(config, jid_config),
+    [{jids, JidConfigList}] = ets:lookup(config, jids),
+    ulog:debug("~p", [JidConfigList]),
     lists:foreach(fun(ConfigEntry) ->
-                          ConfigRecord = config:parse(jid_config, 
-                                                      ConfigEntry),
-                          start_worker(ConfigRecord, Supervisor)
+                          ConfigMap = config:parse(jid_config, 
+                                                   ConfigEntry),
+                          start_worker(ConfigMap, Supervisor)
                   end,
                   JidConfigList),
     {noreply, State};
@@ -92,7 +90,7 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 %% gen_server callbacks end
 
 start_worker(Config, Supervisor) ->
-    Name = list_to_atom(jid_info:jid(Config)),
+    Name = list_to_atom(jid_config:jid(Config)),
     ulog:info("Starting worker ~p with supervisor ~p", [Name, Supervisor]),
     {ok, _Pid} = supervisor:start_child(Supervisor,
                                         {Name,
@@ -101,15 +99,3 @@ start_worker(Config, Supervisor) ->
                                          5000,
                                          worker,
                                          [jid_worker]}).
-
-start_plugin(Plugin, Supervisor) ->
-    try Plugin:start(Supervisor) of
-        {ok, Pid} ->
-            ulog:info("Plugin ~p started with pid ~p", [Plugin, Pid]),
-            ok
-    catch
-        error:Exception ->
-            ulog:info("Plugin ~p failed to load with exception:~n~p~n"
-                      "Backtrace: ~p", [Plugin, Exception, erlang:get_stacktrace()])
-    end.
-
