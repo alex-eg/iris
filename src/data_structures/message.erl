@@ -1,5 +1,5 @@
 -module(message).
--export([create/1, type/1, body/1, from/1, timestamp/1]).
+-export([create/1, type/1, body/1, from/1, timestamp/1, raw/1]).
 
 create(RawMessage) ->
     Type = exmpp_message:get_type(RawMessage),
@@ -9,7 +9,11 @@ create(RawMessage) ->
     #{type => Type,
       from => From,
       body => Body,
-      timestamp => TimeStamp}.
+      timestamp => TimeStamp,
+      raw => RawMessage}.
+
+raw(Message) ->
+    maps:get(raw, Message).
 
 type(Message) ->
     maps:get(type, Message).
