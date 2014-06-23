@@ -21,22 +21,24 @@ start_link(Config, Name) ->
                   },
     gen_server:start_link({local, Name}, ?MODULE, State, []).
 
+% gen_server callbacks
+
 init(State) ->
     Config = State#state.config,
     Session = exmpp_session:start({1, 0}), %% retardation needed to start SSL authorization
-    [Name, Server] = string:tokens(jid_info:jid(Config), "@"),
+    [Name, Server] = string:tokens(jid_config:jid(Config), "@"),
     Jid = exmpp_jid:make(Name,
                          Server,
-                         jid_info:resource(Config)),
-    exmpp_session:auth_info(Session, Jid, jid_info:password(Config)),
+                         jid_config:resource(Config)),
+    exmpp_session:auth_info(Session, Jid, jid_config:password(Config)),
     {ok, _StreamID, _Features} = exmpp_session:connect_TCP(Session,
                                                            Server,
-                                                           jid_info:port(Config)),
+                                                           jid_config:port(Config)),
     exmpp_session:login(Session, "DIGEST-MD5"),
     exmpp_session:send_packet(Session,
                               exmpp_presence:set_status(
                                 exmpp_presence:available(),
-                                jid_info:status(Config))
+                                jid_config:status(Config))
                              ),
     NewState = State#state{
                  config = Config,
@@ -52,9 +54,9 @@ handle_call(Any, _From, State) ->
 handle_cast(join_rooms, State) ->
     Config = State#state.config,
     Session = State#state.session,
-    RoomList = config:get_room_list(Config),
-    lists:foreach(fun(RoomTuple) ->
-                          muc_tools:join_groupchat(Session, RoomTuple)
+    RoomList = jid_config:room_confs(Config),
+    lists:foreach(fun(RoomConfig) ->
+                          muc_tools:join_groupchat(Session, RoomConfig)
                   end,
                   RoomList),
     gen_server:cast(self(), send_muc_keepalive),
@@ -75,10 +77,10 @@ handle_info(#received_packet{packet_type = message, raw_packet = Packet}, State)
     Message = message:create(Packet),
     %% Here starts actual messages' long journey through all modules
     Config = State#state.config,
-    process_message(message:type(Message), Packet, Config),
+    process_message(Message, Config),
     {noreply, State};
-handle_info(#received_packet{packet_type = PacketType}, State) ->
-    ulog:info("Resieved XMPP packet of type ~s", [PacketType]),
+handle_info(#received_packet{packet_type = PacketType, raw_packet = Packet}, State) ->
+    ulog:info("Resieved XMPP packet~ntype: ~p~npacket: ~p", [PacketType, Packet]),
     {noreply, State};
 handle_info(Msg, State) -> 
     ulog:info("Recieved unknown message: '~p'", [Msg]),
