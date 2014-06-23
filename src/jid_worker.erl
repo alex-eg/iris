@@ -95,61 +95,19 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
 %% gen_server callbacks end
 
-process_message(chat, Packet, Config) ->
-    %% TODO: add ignore list to forbid unwanted individuals calling modules
-    process_chat(Packet, Config);
-process_message(groupchat, Packet, Config) ->
-    Stamp = exmpp_xml:get_element(Packet, delay),
-    process_groupchat(Stamp, Packet, Config).
-
-process_groupchat(undefined, Packet, Config) ->
-    Body = exmpp_message:get_body(Packet),
-    From = format_str("~s", [exmpp_xml:get_attribute(Packet, <<"from">>, undefined)]),
-    Text = format_str("~s", [Body]),
-    Match = re:run(Text, "^" ++ ?DEFAULT_COMMAND_PREFIX ++ "(\\w*?)($| (.*)$)", [unicode]),
-    try process_command(Match, Text, Config, From) of
-        nomatch -> ok;
-        no_such_command -> ok;
-        Reply when is_list(Reply) ->
-            NewPacket = create_packet(groupchat, Reply, Packet, Config),
-            gen_server:cast(self(), {send_packet, NewPacket})
-    catch
-        error:Exception ->
-            ulog:info("Caught exception while processing command '~s':~n~p~n"
-                      "Backtrace: ~p",
-                      [Text, Exception, erlang:get_stacktrace()])
-    end;
-process_groupchat(_Stamp, _Packet, _Config) ->
-    ok.
-
-process_chat(Packet, Config) ->
-    ulog:debug("Recieved chat packet: ~p", [Packet]),
-    Body = exmpp_message:get_body(Packet),
-    Text = format_str("~s", [Body]),
-    %% simple echo by now
-    NewPacket = create_packet(chat, Text, Packet, Config),
-    ulog:debug("Sending packet back: ~p", [NewPacket]),
-    gen_server:cast(self(), {send_packet, NewPacket}).
-
-process_command(nomatch, _, _, _) ->
-    nomatch;
-process_command({match, Match}, Text, Config, From) ->
-    {ModuleName, ArgString} = extract_info(Match, Text),
-    Module = list_to_atom(ModuleName),
-    ModuleList = jid_info:modules(Config),
-    ModuleExists = lists:member(Module, ModuleList),
-    if ModuleExists ->
-            Result = Module:run(ArgString, From);
-       not ModuleExists ->
-            Result = no_such_command
-    end,
-    Result.
+process_message(Message, Config) ->
+    Plugins = jid_config:plugins(Config),
+    lists:foreach(fun(Plugin) ->
+                          ulog:debug("passing message in plugin ~s", [Plugin]),
+                          Plugin:process_message(Message, Config)
+                  end,
+                  Plugins).
 
 create_packet(Type, Reply, Incoming, Config) ->
     From = exmpp_xml:get_attribute(Incoming, <<"from">>, undefined),
     [Jid|ResourceList] = string:tokens(format_str("~s",[From]),"/"),
     Resource = string:join(ResourceList, "/"), % In case nick/resource contains '/' characters
-    Sender = format_str("~s", [Config#jid_info.jid]),
+    Sender = format_str("~s", [jid_config:jid(Config)]),
     create_packet(Type, Jid, Resource, Sender, Reply).
 
 create_packet(chat, Jid, Resource, Sender, Reply) ->
