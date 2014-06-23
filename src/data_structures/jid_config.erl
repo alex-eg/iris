@@ -1,14 +1,16 @@
 -module(jid_config).
--export([create/7]).
--export([port/1, jid/1, resource/1, status/1, password/1, room_confs/1, plugins/1]).
+-export([create/8]).
+-export([port/1, jid/1, resource/1, status/1, password/1, room_confs/1, plugins/1, commands/1]).
 
-create(Port, Jid, Status, Resource, Password, RoomConfs, Plugins) ->
+create(Port, Jid, Status, Resource,
+       Password, RoomConfs, Plugins, Commands) ->
     #{port => Port,
       jid => Jid,
       status => Status,
       resource => Resource,
       password => Password,
       room_confs => RoomConfs,
+      commands => Commands,
       plugins => Plugins}.
 
 port(State) ->
@@ -28,6 +30,9 @@ password(State) ->
 
 room_confs(State) ->
     maps:get(room_confs, State).
+
+commands(State) ->
+    maps:get(commands, State).
 
 plugins(State) ->
     maps:get(plugins, State).

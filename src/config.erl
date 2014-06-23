@@ -1,15 +1,14 @@
 -module(config).
--export([init/1, get_room_list/1, parse/2]).
+-export([read/1, parse/2]).
 
 -include("xmpp.hrl").
 
-init(Filename) ->
+read(Filename) ->
     {ok, [ConfigList]} = file:consult(Filename),
     ulog:info("Read configuration file ~s", [Filename]),
     ConfigList.
 
-parse(jid_config, {jid_config, Config}) ->
-    Jid = proplists:get_value(jid, Config),
+parse(jid_config, {Jid, Config}) ->
     Port = proplists:get_value(port, Config, 5222),
     Resource = proplists:get_value(resource, Config),
     Status = proplists:get_value(status, Config, "undefined"),
@@ -18,12 +17,13 @@ parse(jid_config, {jid_config, Config}) ->
                                   parse(room_config, RoomCfg)
                           end,
                           proplists:get_value(rooms, Config)),
-    Modules = proplists:get_value(modules, Config),
-    jid_config:create(Port, Jid, Status, Resource, Password, RoomConfs, Modules).
-
+    Plugins = proplists:get_value(plugins, Config),
+    Commands = proplists:get_value(commands, Config),
+    jid_config:create(Port, Jid, Status, Resource, Password, RoomConfs, Plugins, Commands);
 parse(room_config, {Jid, Config}) ->
+    Password = proplists:get_value(password, Config, nopassword),
     Nick = proplists:get_value(nick, Config),
     Commands = proplists:get_value(commands, Config),
     Logging = proplists:get_value(logging, Config),
     Banlist = proplists:get_value(banlist, Config),
-    room_config:create(Jid, Nick, Commands, Logging, Banlist).
+    room_config:create(Jid, Nick, Password, Commands, Logging, Banlist).
