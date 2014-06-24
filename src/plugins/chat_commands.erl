@@ -5,6 +5,9 @@
 
 -define(DEFAULT_COMMAND_PREFIX, "@").
 
+init(_Config) ->
+    okay.
+
 process_message(Message, Config) ->
     Type = message:type(Message),
     case Type of 
@@ -13,11 +16,20 @@ process_message(Message, Config) ->
         groupchat ->
             preprocess_groupchat(Message, Config);
         Other ->
-            ulog:error("Got stragne message type: ~s", [Type])
+            ulog:error("Got unknown message type: ~s", [Type])
     end.
 
-process_chat(Message, Config) ->            
-    ok.
+process_chat(Message, Config) ->
+    CommandList = jid_config:commands(Config),
+    lists:foreach(fun(Command) ->
+                          Response = Command:run(string:tokens(Message, " ")),
+                          ulog:debug("Command ~s returned ~p", [Command, Response]),
+                          case Response of
+                              nope -> ok;
+                              _ -> jid_worker:reply(Response, Message, Config)
+                          end
+                  end,
+                  CommandList).
 
 preprocess_groupchat(Message, Config) ->
     Stamp = exmpp_xml:get_element(message:raw(Message), delay), %% removing history messages
@@ -27,9 +39,10 @@ preprocess_groupchat(Message, Config) ->
     end.
 
 process_groupchat(Message, Config) ->
-    _RoomList = jid_config:room_confs(Config),
+    RoomList = jid_config:room_confs(Config),
     FromRoom = message:from(Message),
-    ulog:info("Message from room ~s", [FromRoom]).
+    ulog:debug("Message from room ~s", [FromRoom]).
+
 
 
 %% !!moved from jid_worker!!
@@ -84,3 +97,10 @@ process_groupchat(Message, Config) ->
 %%     end,
 %%     Result.
 
+%% extract_info([_, {ModuleStart, ModuleLength}, {_ArgStart, _ArgLength}], Text) ->
+%%     Module = lists:sublist(Text, ModuleStart + 1, ModuleLength),
+%%     {Module, ""};
+%% extract_info([_, {ModuleStart, ModuleLength}, {ArgStart, ArgLength}, _], Text) ->
+%%     Module = lists:sublist(Text, ModuleStart + 1, ModuleLength),
+%%     Argument = string:strip(lists:sublist(Text, ArgStart + 1, ArgLength)),
+%%     {Module, Argument}.
