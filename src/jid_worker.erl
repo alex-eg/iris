@@ -5,6 +5,7 @@
 %% gen_server callbacks
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 %% module API
+-export([reply/3]).
 
 -include_lib("exmpp/include/exmpp_client.hrl").
 -include("xmpp.hrl").
@@ -75,8 +76,8 @@ handle_cast(Any, State) ->
 %% XMPP packets are handled via handle_info for some reason
 handle_info(#received_packet{packet_type = message, raw_packet = Packet}, State) ->
     Message = message:create(Packet),
-    %% Here starts actual messages' long journey through all modules
     Config = State#state.config,
+    %% Here starts actual messages' long journey through all plugins
     process_message(Message, Config),
     {noreply, State};
 handle_info(#received_packet{packet_type = PacketType, raw_packet = Packet}, State) ->
@@ -103,12 +104,13 @@ process_message(Message, Config) ->
                   end,
                   Plugins).
 
-create_packet(Type, Reply, Incoming, Config) ->
+reply(Reply, Incoming, Config) ->
     From = exmpp_xml:get_attribute(Incoming, <<"from">>, undefined),
     [Jid|ResourceList] = string:tokens(format_str("~s",[From]),"/"),
     Resource = string:join(ResourceList, "/"), % In case nick/resource contains '/' characters
     Sender = format_str("~s", [jid_config:jid(Config)]),
-    create_packet(Type, Jid, Resource, Sender, Reply).
+    NewMessage = create_packet(message:type(Incoming), Jid, Resource, Sender, Reply),
+    gen_server:cast(self(), {send_packet, NewMessage}).
 
 create_packet(chat, Jid, Resource, Sender, Reply) ->
     Reciever = list_to_binary(Jid ++ "/" ++ Resource),
@@ -128,11 +130,3 @@ create_packet(groupchat, Room, Nick, Sender, Reply) ->
 
 format_str(Format, Data) ->
     lists:flatten(io_lib:format(Format, Data)).
-
-extract_info([_, {ModuleStart, ModuleLength}, {_ArgStart, _ArgLength}], Text) ->
-    Module = lists:sublist(Text, ModuleStart + 1, ModuleLength),
-    {Module, ""};
-extract_info([_, {ModuleStart, ModuleLength}, {ArgStart, ArgLength}, _], Text) ->
-    Module = lists:sublist(Text, ModuleStart + 1, ModuleLength),
-    Argument = string:strip(lists:sublist(Text, ArgStart + 1, ArgLength)),
-    {Module, Argument}.
