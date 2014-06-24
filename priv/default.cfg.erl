@@ -1,9 +1,4 @@
 [
- {plugins, [
-            external_interface
-           ]
- },
-
  {shrinker, [
              {request_url, "http://xn--jj0a.jp/"},
              {params, "fUrl=~s&id=~s"}
@@ -25,25 +20,35 @@
                   {engine_id, "your-custom-search-engine-id"}
                  ]},
 
- {jid_config, [
-               {jid, "somejid@server.do"},
-               {resource, "any_resource"},
-               {status, "status text here~"},
-               {password, "very_secret_password"},
-               {rooms,[{"room1@conference.server.do", "Room Nick"},
-                       {"room2@conference.server.do", "Nick", "room_password"}
-                      ]},
-               {modules, [last, exit]},
-              ]},
-
- {jid_config, [
-               {jid, "another_jid@server.do"},
-               {resource, "another_resource"},
-               {status, "status~"},
-               {password, "very_very_secret_password"},
-               {rooms,[{"room1@conference.server.do", "Noom Rick"},
-                       {"room2@conference.server.do", "Kick", "room_password"}
-                      ]},
-               {modules, [last, exit]}
-              ]}
+ {jids, [{"somejid@server.do", 
+          [{resource, "any_resource"},
+           {status, "status text here~"},
+           {password, "very_secret_password"},
+           {rooms,[{"room1@conference.server.do", 
+                    [{nick, "Room Nick"},
+                     {commands, [last, exit]},
+                     {logging, on},
+                     {banlist, [{nick, "romeo"},
+                                {jid, "juliet@example.net"}]}
+                     ]},
+                   {"room2@conference.server.do",
+                    [{nick, "Nick"},
+                     {password, "secretroompassword"},
+                     {commands, []},
+                     {logging, off},
+                     {banlist, []}]}
+                  ]},
+           {commands, [last, exit]},
+           {plugins, [chat_command]}
+          ]},
+         {"another_jid@server.do",
+          [{resource, "resource"},
+           {status, "status~"},
+           {password, "very_very_secret_password"},
+           {rooms,[{"room1@conference.server.do", [{nick, "Noom Rick"}]},
+                   {"room2@conference.server.do", [{nick, "Kick"},
+                                                   {password, "room_password"}]}
+                  ]},
+           {commands, [last, exit]}
+          ]}]}
 ].

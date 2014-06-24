@@ -41,6 +41,7 @@ preprocess_groupchat(Message, Config) ->
 process_groupchat(Message, Config) ->
     RoomList = jid_config:room_confs(Config),
     FromRoom = message:from(Message),
+    RoomConfigList = proplists:
     ulog:debug("Message from room ~s", [FromRoom]).
 
 
