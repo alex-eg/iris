@@ -2,9 +2,9 @@
 -export([run/2]).
 -behavior(iris_command).
 
-run("", _) ->
+run(["@g"], _) ->
     "Nothing to search";
-run(Args, _) ->
+run(["@g", Args], _) ->
     [{google_search, SearchConfig}] = gen_server:call(core, {get_config, google_search}),
 
     EscapedQuery = http_uri:encode(Args),
