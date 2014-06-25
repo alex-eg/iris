@@ -22,7 +22,8 @@ process_message(Message, Config) ->
 process_chat(Message, Config) ->
     CommandList = jid_config:commands(Config),
     lists:foreach(fun(Command) ->
-                          Response = Command:run(string:tokens(Message, " ")),
+                          Response = Command:run(string:tokens(message:body(Message), " "),
+                                                 message:from(Message)),
                           ulog:debug("Command ~s returned ~p", [Command, Response]),
                           case Response of
                               nope -> ok;
@@ -39,10 +40,25 @@ preprocess_groupchat(Message, Config) ->
     end.
 
 process_groupchat(Message, Config) ->
-    RoomList = jid_config:room_confs(Config),
-    FromRoom = message:from(Message),
-    RoomConfigList = proplists:
-    ulog:debug("Message from room ~s", [FromRoom]).
+    RoomConfList = jid_config:room_confs(Config),
+    FromRoom = message:from_room(Message),
+    ulog:debug("Message from room ~s", [FromRoom]),
+    [RoomConfig] = lists:filter(fun(RoomConf) ->
+                                        room_config:jid(RoomConf) == FromRoom
+                                end,
+                                RoomConfList),
+    CommandList = room_config:commands(RoomConfig),
+    lists:foreach(fun(Command) ->
+                          Response = Command:run(string:tokens(message:body(Message), " "),
+                                                 message:from(Message)),
+                          ulog:debug("Command ~s returned ~p", [Command, Response]),
+                          case Response of
+                              nope -> ok;
+                              _ -> jid_worker:reply(Response, Message, Config)
+                          end
+                  end,
+                  CommandList).
+
 
 
 
