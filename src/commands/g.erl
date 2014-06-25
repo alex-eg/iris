@@ -20,7 +20,9 @@ run(["@g", Args], _) ->
     {Response} = jiffy:decode(list_to_binary(ResponseJSON)),
     Items = lists:keyfind(<<"items">>, 1, Response),
     Result = extract_result(Items),
-    Result.
+    Result;
+run(_, _) -> nope.
+
 
 extract_result({<<"items">>, ResultList}) ->
     [{FirstResult}|_] = ResultList,

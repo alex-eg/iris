@@ -12,7 +12,8 @@ run(["@word"|Args], _) ->
     {{_, 200, _}, _, Response} = gen_server:call(core, {get_http, get, {QueryURL, []}, [], []}),
     %% Here be dragons
     Dom = mochiweb_html:parse(Response),
-    extract_info(Dom).
+    extract_info(Dom);
+run(_, _) -> nope.
 
 make_request_url("en", Tail, Base) ->
     Query = create_query(Tail),
