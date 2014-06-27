@@ -105,7 +105,7 @@ process_message(Message, Config) ->
                   Plugins).
 
 reply(Reply, Incoming, Config) ->
-    From = exmpp_xml:get_attribute(Incoming, <<"from">>, undefined),
+    From = exmpp_xml:get_attribute(message:raw(Incoming), <<"from">>, undefined),
     [Jid|ResourceList] = string:tokens(format_str("~s",[From]),"/"),
     Resource = string:join(ResourceList, "/"), % In case nick/resource contains '/' characters
     Sender = format_str("~s", [jid_config:jid(Config)]),
