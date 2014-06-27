@@ -1,11 +1,11 @@
 -module(chat_commands).
 -behaviour(iris_plugin).
 
--export([process_message/2]).
+-export([start/3, process_message/2]).
 
 -define(DEFAULT_COMMAND_PREFIX, "@").
 
-init(_Config) ->
+start(_Parent, _Config, _From) ->
     okay.
 
 process_message(Message, Config) ->

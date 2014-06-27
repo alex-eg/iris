@@ -3,5 +3,5 @@
 -callback process_message(Message :: term(), Config :: term()) ->
     term().
 
--callback init(Config :: term()) ->
+-callback start(Parent :: term(), Config :: term(), From :: term()) ->
     term().
