@@ -15,7 +15,7 @@ process_message(Message, Config) ->
             process_chat(Message, Config);
         groupchat ->
             preprocess_groupchat(Message, Config);
-        Other ->
+        _Other ->
             ulog:error("Got unknown message type: ~s", [Type])
     end.
 
