@@ -16,7 +16,7 @@ run(["@g", Args], _) ->
         ++ "&cx=" ++ EngineId
         ++ "&q=" ++ Query
         ++ "&num=1",    % We need only 1st result
-    {{_, 200, _}, _, ResponseJSON} = gen_server:call(core, {get_http, get, {QueryURL, []}, [], []}),
+    {{_, 200, _}, _, ResponseJSON} = misc:httpc_request(get, {QueryURL, []}, [], []),
     {Response} = jiffy:decode(list_to_binary(ResponseJSON)),
     Items = lists:keyfind(<<"items">>, 1, Response),
     Result = extract_result(Items),
