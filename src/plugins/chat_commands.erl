@@ -20,7 +20,7 @@ process_message(Message, Config) ->
     end.
 
 process_chat(Message, Config) ->
-    CommandList = jid_config:commands(Config),
+    CommandList = proplists:get_value(commands, jid_config:other_config(Config)),
     lists:foreach(fun(Command) ->
                           Response = Command:run(string:tokens(message:body(Message), " "),
                                                  message:from(Message)),
