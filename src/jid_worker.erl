@@ -126,7 +126,3 @@ create_packet(groupchat, Room, Nick, Sender, Reply) ->
     Packet3 = exmpp_xml:set_attribute(Packet2, <<"to">>, Reciever),
     Packet3.
 
-%% Local helpers below
-
-format_str(Format, Data) ->
-    lists:flatten(io_lib:format(Format, Data)).
