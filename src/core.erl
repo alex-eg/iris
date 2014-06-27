@@ -44,10 +44,13 @@ handle_call(Any, _Caller, State) ->
     {noreply, State}.
 
 handle_cast({connected, From, Name}, State) ->
-    ulog:info("Worker ~p has connected with pid ~p, now entering rooms...~n", [Name, From]),
+    ulog:info("Worker ~p has connected with pid ~p, starting plugins", [Name, From]),
     ets:insert(workers, {From, Name}),
-    gen_server:cast(From, join_rooms),
+    gen_server:cast(From, start_plugins),
     {noreply, State};
+handle_cast({started_plugins, From, Name}, State) ->
+    ulog:info("Worker ~p has connected plugins, joining rooms", [Name]),
+    gen_server:cast(From, join_rooms);
 handle_cast({terminated, From, Reason}, State) ->
     [{_, Name}] = ets:lookup(workers, From),
     ulog:info("Worker ~p for jid ~p terminated.~nReason: ~p", [Name, From, Reason]),
@@ -94,7 +97,7 @@ start_worker(Config, Supervisor) ->
     ulog:info("Starting worker ~p with supervisor ~p", [Name, Supervisor]),
     {ok, _Pid} = supervisor:start_child(Supervisor,
                                         {Name,
-                                         {jid_worker, start_link, [Config, Name]},
+                                         {jid_worker, start_link, [Config, Name, Supervisor]},
                                          transient,
                                          5000,
                                          worker,

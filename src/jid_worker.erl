@@ -1,23 +1,25 @@
 -module(jid_worker).
 -behavior(gen_server).
 %% entry point
--export([start_link/2]).
+-export([start_link/3]).
 %% gen_server callbacks
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 %% module API
--export([reply/3]).
+-export([reply/2]).
 
 -include_lib("exmpp/include/exmpp_client.hrl").
 -include("xmpp.hrl").
 
 -record(state,
         {name,
+         supervisor,
          config,
          session
         }).
 
-start_link(Config, Name) ->
+start_link(Config, Name, Supervisor) ->
     State = #state{name = Name,
+                   supervisor = Supervisor,
                    config = Config
                   },
     gen_server:start_link({local, Name}, ?MODULE, State, []).
@@ -52,6 +54,20 @@ handle_call(Any, _From, State) ->
     ulog:info("Recieved unknown call: ~p", [Any]),
     {noreply, State}.
 
+handle_cast(start_plugins, State) ->
+    Config = State#state.config,
+    PluginList = jid_config:plugins(Config),
+    ulog:info(State#state.name, "found plugins: ~p", [PluginList]),
+    lists:foreach(fun(Plugin) ->
+                          ulog:info(State#state.name, "starting plugin: ~p", [Plugin]),
+                          %% Hook point #1
+                          Plugin:start(State#state.supervisor,
+                                       Config,
+                                       self())
+                  end,
+                  PluginList),
+    gen_server:cast(core, {started_plugins, self(), State#state.name}),
+    {noreply, State};
 handle_cast(join_rooms, State) ->
     Config = State#state.config,
     Session = State#state.session,
@@ -62,12 +78,17 @@ handle_cast(join_rooms, State) ->
                   RoomList),
     gen_server:cast(self(), send_muc_keepalive),
     {noreply, State};
-handle_cast(send_muc_keepalive, State) ->
-    %% TODD: whitespace ping goes here
-    {noreply, State};
+handle_cast({send_message, Message, Recepient}, State) ->
+    Config = State#state.config,
+    Sender = misc:format_str("~s", [jid_config:jid(Config)]),
+    MessagePacket = create_packet(Recepient, "",Sender, Message),
+    gen_server:cast(self(), {send_packet, MessagePacket});
 handle_cast({send_packet, Packet}, State) ->
     Session = State#state.session,
     exmpp_session:send_packet(Session, Packet),
+    {noreply, State};
+handle_cast(send_muc_keepalive, State) ->
+    %% TODD: whitespace ping goes here
     {noreply, State};
 handle_cast(Any, State) ->
     ulog:info("Recieved unknown cast: '~p'", [Any]),
@@ -100,29 +121,21 @@ process_message(Message, Config) ->
     Plugins = jid_config:plugins(Config),
     lists:foreach(fun(Plugin) ->
                           ulog:debug("passing message in plugin ~s", [Plugin]),
+                          %% Hook point #2
                           Plugin:process_message(Message, Config)
                   end,
                   Plugins).
+reply(Message, Recepient) ->
+    gen_server:cast(self(), {send_message, Message, Recepient}).
+%% Low-level xmpp package creation
 
-reply(Reply, Incoming, Config) ->
-    From = exmpp_xml:get_attribute(message:raw(Incoming), <<"from">>, undefined),
-    [Jid|ResourceList] = string:tokens(format_str("~s",[From]),"/"),
-    Resource = string:join(ResourceList, "/"), % In case nick/resource contains '/' characters
-    Sender = format_str("~s", [jid_config:jid(Config)]),
-    NewMessage = create_packet(message:type(Incoming), Jid, Resource, Sender, Reply),
-    gen_server:cast(self(), {send_packet, NewMessage}).
-
-create_packet(chat, Jid, Resource, Sender, Reply) ->
-    Reciever = list_to_binary(Jid ++ "/" ++ Resource),
+create_packet(RecepientJid, RecepientResource, Sender, Reply) ->
+    case RecepientResource of
+        "" -> Recepient = list_to_binary(RecepientJid);
+        _AnyOther -> Recepient = list_to_binary(RecepientJid ++ "/" ++ RecepientResource)
+    end,
     Packet1 = exmpp_message:make_chat(?NS_JABBER_CLIENT, Reply),
     Packet2 = exmpp_xml:set_attribute(Packet1, <<"from">>, Sender),
-    Packet3 = exmpp_xml:set_attribute(Packet2, <<"to">>, Reciever),
-    Packet3;    
-create_packet(groupchat, Room, Nick, Sender, Reply) ->
-    Body = Nick ++ ", " ++ Reply,
-    Reciever = list_to_binary(Room),
-    Packet1 = exmpp_message:make_groupchat(?NS_JABBER_CLIENT, Body),
-    Packet2 = exmpp_xml:set_attribute(Packet1, <<"from">>, Sender),
-    Packet3 = exmpp_xml:set_attribute(Packet2, <<"to">>, Reciever),
+    Packet3 = exmpp_xml:set_attribute(Packet2, <<"to">>, Recepient),
     Packet3.
 
