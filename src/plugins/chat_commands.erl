@@ -27,7 +27,8 @@ process_chat(Message, Config) ->
                           ulog:debug("Command ~s returned ~p", [Command, Response]),
                           case Response of
                               nope -> ok;
-                              _ -> jid_worker:reply(Response, Message, Config)
+                              _ -> Jid = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
+                                   jid_worker:reply(Response, Jid)
                           end
                   end,
                   CommandList).
@@ -54,7 +55,11 @@ process_groupchat(Message, Config) ->
                           ulog:debug("Command ~s returned ~p", [Command, Response]),
                           case Response of
                               nope -> ok;
-                              _ -> jid_worker:reply(Response, Message, Config)
+                              _ -> From = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
+                                   [RoomJid|Nick] = string:tokens(misc:format_str("~s",[From]),"/"),
+                                   Nick = string:join(Nick, "/"), % In case nick/resource contains '/' characters
+                                   Message = Nick ++ ", " ++ Response,
+                                   jid_worker:reply(Message, RoomJid)
                           end
                   end,
                   CommandList).
