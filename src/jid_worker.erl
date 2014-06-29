@@ -81,8 +81,9 @@ handle_cast(join_rooms, State) ->
 handle_cast({send_message, Message, Recepient}, State) ->
     Config = State#state.config,
     Sender = misc:format_str("~s", [jid_config:jid(Config)]),
-    MessagePacket = create_packet(Recepient, "",Sender, Message),
-    gen_server:cast(self(), {send_packet, MessagePacket});
+    MessagePacket = create_packet(Recepient, "", Sender, Message),
+    gen_server:cast(self(), {send_packet, MessagePacket}),
+    {noreply, State};
 handle_cast({send_packet, Packet}, State) ->
     Session = State#state.session,
     exmpp_session:send_packet(Session, Packet),
@@ -102,7 +103,7 @@ handle_info(#received_packet{packet_type = message, raw_packet = Packet}, State)
     process_message(Message, Config),
     {noreply, State};
 handle_info(#received_packet{packet_type = PacketType, raw_packet = Packet}, State) ->
-    ulog:info("Resieved XMPP packet~ntype: ~p~npacket: ~p", [PacketType, Packet]),
+    %% ulog:debug("Resieved XMPP packet~ntype: ~p~npacket: ~p", [PacketType, Packet]),
     {noreply, State};
 handle_info(Msg, State) -> 
     ulog:info("Recieved unknown message: '~p'", [Msg]),
