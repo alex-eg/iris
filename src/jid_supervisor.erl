@@ -14,7 +14,7 @@ init([Config]) ->
        [{WorkerName,
          {jid_worker, start_link, [Config, WorkerName, self()]},
          transient,
-         10000,
+         brutal_kill,
          worker,
          [jid_worker]}]
       }}.
