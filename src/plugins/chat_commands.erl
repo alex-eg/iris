@@ -15,8 +15,10 @@ process_message(Message, Config) ->
             process_chat(Message, Config);
         groupchat ->
             preprocess_groupchat(Message, Config);
+        error ->
+            ulog:warning(?MODULE, "got XMPP error stanza: ~p", [message:raw(Message)]);
         _Other ->
-            ulog:error("Got unknown message type: ~s", [Type])
+            ulog:error(?MODULE, "got unknown message type: ~s", [Type])
     end.
 
 process_chat(Message, Config) ->
