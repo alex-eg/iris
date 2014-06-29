@@ -129,15 +129,20 @@ process_message(Message, Config) ->
                   end,
                   Plugins).
 reply(Message, Recepient) ->
+    ulog:debug("replying ~p with ~p", [Recepient, Message]),
     gen_server:cast(self(), {send_message, Message, Recepient}).
+
 %% Low-level xmpp package creation
 
 create_packet(RecepientJid, RecepientResource, Sender, Reply) ->
     case RecepientResource of
-        "" -> Recepient = list_to_binary(RecepientJid);
-        _AnyOther -> Recepient = list_to_binary(RecepientJid ++ "/" ++ RecepientResource)
+        "" ->
+            Recepient = list_to_binary(RecepientJid),
+            Packet1 = exmpp_message:make_groupchat(?NS_JABBER_CLIENT, Reply);
+        _AnyOther ->
+            Recepient = list_to_binary(RecepientJid ++ "/" ++ RecepientResource),
+            Packet1 = exmpp_message:make_chat(?NS_JABBER_CLIENT, Reply)
     end,
-    Packet1 = exmpp_message:make_chat(?NS_JABBER_CLIENT, Reply),
     Packet2 = exmpp_xml:set_attribute(Packet1, <<"from">>, Sender),
     Packet3 = exmpp_xml:set_attribute(Packet2, <<"to">>, Recepient),
     Packet3.
