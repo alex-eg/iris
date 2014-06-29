@@ -13,11 +13,35 @@ start_shortcut() ->
 
 %% Application behavior callbacks
 start(normal, _StartArgs) ->
-    ulog:info("#---------===================---------#"),
-    ulog:info("|-----====== IRIS starting ======-----|"),
-    ulog:info("#---------===================---------#"),
-    {ok, _Pid} = supervisor:start_link({local, main_sup}, ?MODULE, []),
-    {ok, self()}.
+    ulog:info("#-------------=======================-------------#"),
+    ulog:info("|---------======== IRIS starting ========---------|"),
+    ulog:info("#-------------=======================-------------#"),
+    ulog:info("|                                                 |"),
+    ulog:info("|                               .',               |"),
+    ulog:info("|                            'odolX'              |"),
+    ulog:info("|            .doodxdol;.   'Ok.   ;X.             |"),
+    ulog:info("|             OO::::lkXWO.;Xo      lK             |"),
+    ulog:info("|            .Xc       ,WXXc       ON             |"),
+    ulog:info("|            kN'  dxkk: KXN.      oNc             |"),
+    ulog:info("|           .NN' KK0lcxOk0X.    .kklcodoc,        |"),
+    ulog:info("|            xWk:0O,    ;OX;,..ddxKOl''cd00:      |"),
+    ulog:info("|             ,oxOOx.    ;0OoKKc0K;  ..   'xKd;'. |"),
+    ulog:info("|          .';cc:,.,oc    xOl;,..oxckOk.    .NXc  |"),
+    ulog:info("|       ,l0d'.....,k0k0oclxo    'dOdl;;,    xK.   |"),
+    ulog:info("|    .xOo:.        ;Okc  .OKkdk0KK'       ,xK.    |"),
+    ulog:info("|   '0l.       'cx0Nl    'OkddKKKKdolc:;oXNo      |"),
+    ulog:info("|     :OKOddkKKOKXXKc'..lKkKXd,  .:oOkdoc'        |"),
+    ulog:info("|        .,:;,xNNOdNX00KOOX.dk       ;K;          |"),
+    ulog:info("|            ;XX. kKOkO xNN, Od       kN,         |"),
+    ulog:info("|            .XXl .xOk;.NNN0 .X;      'Nx         |"),
+    ulog:info("|             :NXk. .. 'XXX0  ;Xc      Xo         |"),
+    ulog:info("|              ,KNk.,lONWXo    .dKoolllN.         |"),
+    ulog:info("|                ONNXko:.         .....'          |"),
+    ulog:info("|                .x.                              |"),
+    ulog:info("|                                                 |"),
+    ulog:info("#-------------=======================-------------#"),
+
+    supervisor:start_link({local, main_sup}, ?MODULE, []).
 
 stop(_State) ->
     exit(main_sup, shutdown),
