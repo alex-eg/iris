@@ -54,14 +54,13 @@ process_groupchat(Message, Config) ->
     lists:foreach(fun(Command) ->
                           Response = Command:run(string:tokens(message:body(Message), " "),
                                                  message:from(Message)),
-                          ulog:debug("Command ~s returned ~p", [Command, Response]),
                           case Response of
                               nope -> ok;
                               _ -> From = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
-                                   [RoomJid|Nick] = string:tokens(misc:format_str("~s",[From]),"/"),
-                                   Nick = string:join(Nick, "/"), % In case nick/resource contains '/' characters
-                                   Message = Nick ++ ", " ++ Response,
-                                   jid_worker:reply(Message, RoomJid)
+                                   [RoomJid|NickResource] = string:tokens(misc:format_str("~s",[From]),"/"),
+                                   Nick = string:join(NickResource, "/"), % In case nick/resource contains '/' characters
+                                   NewMessage = Nick ++ ", " ++ Response,
+                                   jid_worker:reply(NewMessage, RoomJid)
                           end
                   end,
                   CommandList).
