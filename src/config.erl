@@ -19,13 +19,13 @@ parse(jid_config, {Jid, Config}) ->
                           proplists:get_value(rooms, Config)),
     Plugins = proplists:get_value(plugins, Config),
     OtherConfig = lists:filter(fun({Name, _Entry}) ->
-                                       lists:member(Name,
-                                                    [port,
-                                                     resource,
-                                                     status,
-                                                     password,
-                                                     rooms,
-                                                     plugins])
+                                       not lists:member(Name,
+                                                        [port,
+                                                         resource,
+                                                         status,
+                                                         password,
+                                                         rooms,
+                                                         plugins])
                                end,
                                Config),
     jid_config:create(Port, Jid, Status, Resource, Password, RoomConfs, Plugins, OtherConfig);
