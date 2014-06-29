@@ -4,7 +4,8 @@
 
 run(["@g"], _) ->
     "Nothing to search";
-run(["@g", Args], _) ->
+run(["@g"|ArgList], _) ->
+    Args = string:join(ArgList, " "),
     [{google_search, SearchConfig}] = gen_server:call(core, {get_config, google_search}),
 
     EscapedQuery = http_uri:encode(Args),
@@ -36,9 +37,6 @@ extract_result({<<"items">>, ResultList}) ->
     Title = proplists:get_value(title, ResultProplist),
     Snippet = proplists:get_value(snippet, ResultProplist),
     Link = proplists:get_value(link, ResultProplist),
-    ulog:debug("Title:   ~p", [Title]),
-    ulog:debug("Snippet: ~p", [Snippet]),
-    ulog:debug("Link:    ~p", [Link]),
     Result = binary_to_list(Title) ++ "\n" ++
         binary_to_list(Snippet) ++ "\n" ++
         binary_to_list(Link),
