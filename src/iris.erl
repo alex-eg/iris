@@ -49,9 +49,9 @@ stop(_State) ->
 
 %% Supervisor behavior callback
 init(_Args) ->
-    {ok, 
+    {ok,
      {
-       {one_for_one, 10, 60},
+       {one_for_one, 1, 10},
        [{core,
          {core, start_link, [self()]},
          transient,
