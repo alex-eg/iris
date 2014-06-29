@@ -76,7 +76,7 @@ handle_info(_Msg, State) ->
     ulog:info("Recieved unknown message: ~p~n", [_Msg]),
     {noreply, State}.
 
-terminate(_Reason, State) ->
+terminate(Reason, State) ->
     SupRef = State#state.supervisor,
     ets:foldl(fun(Elem, ok) ->
                       supervisor:terminate_child(SupRef, Elem),
@@ -86,6 +86,8 @@ terminate(_Reason, State) ->
               ok,
               workers),
     ets:delete(workers),
+    ulog:info("core process with pid ~p terminated. Reason: ~p",
+              [self(), Reason]),
     ok.
 
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
