@@ -95,12 +95,12 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 %% gen_server callbacks end
 
 start_worker(Config, Supervisor) ->
-    Name = list_to_atom(jid_config:jid(Config)),
-    ulog:info("Starting worker ~p with supervisor ~p", [Name, Supervisor]),
+    Name = list_to_atom(jid_config:jid(Config) ++ "_supervisor"),
+    ulog:info("Starting jid_supervisor for ~p with supervisor ~p", [Name, Supervisor]),
     {ok, _Pid} = supervisor:start_child(Supervisor,
                                         {Name,
-                                         {jid_worker, start_link, [Config, Name, Supervisor]},
+                                         {jid_supervisor, start_link, [Config, Name]},
                                          transient,
-                                         5000,
-                                         worker,
-                                         [jid_worker]}).
+                                         infinity,
+                                         supervisor,
+                                         [jid_supervisor]}).
