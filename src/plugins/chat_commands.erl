@@ -45,7 +45,7 @@ preprocess_groupchat(Message, Config) ->
 process_groupchat(Message, Config) ->
     RoomConfList = jid_config:room_confs(Config),
     FromRoom = message:from_room(Message),
-    ulog:debug("Message from room ~s", [FromRoom]),
+    %% ulog:debug("Message from room ~s", [FromRoom]),
     [RoomConfig] = lists:filter(fun(RoomConf) ->
                                         room_config:jid(RoomConf) == FromRoom
                                 end,

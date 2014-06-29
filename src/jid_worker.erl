@@ -123,13 +123,13 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 process_message(Message, Config) ->
     Plugins = jid_config:plugins(Config),
     lists:foreach(fun(Plugin) ->
-                          ulog:debug("passing message in plugin ~s", [Plugin]),
+                          %% ulog:debug("passing message in plugin ~s", [Plugin]),
                           %% Hook point #2
                           Plugin:process_message(Message, Config)
                   end,
                   Plugins).
 reply(Message, Recepient) ->
-    ulog:debug("replying ~p with ~p", [Recepient, Message]),
+    %% ulog:debug("replying ~p with ~p", [Recepient, Message]),
     gen_server:cast(self(), {send_message, Message, Recepient}).
 
 %% Low-level xmpp package creation
