@@ -22,7 +22,7 @@ init(State) ->
     ok = application:ensure_started(inets),
 
     SupervisorPid = State#state.supervisor,
-    ulog:info("Root node started and has PID ~p, supervisor process is ~p", [self(), SupervisorPid]),
+    ulog:info("Core node started and has pid ~p, supervisor process is ~p", [self(), SupervisorPid]),
 
     %% Global config table, everyone can retrieve information from here
     %% calling core server with get_info request
@@ -50,7 +50,8 @@ handle_cast({connected, From, Name}, State) ->
     {noreply, State};
 handle_cast({started_plugins, From, Name}, State) ->
     ulog:info("Worker ~p has connected plugins, joining rooms", [Name]),
-    gen_server:cast(From, join_rooms);
+    gen_server:cast(From, join_rooms),
+    {noreply, State};
 handle_cast({terminated, From, Reason}, State) ->
     [{_, Name}] = ets:lookup(workers, From),
     ulog:info("Worker ~p for jid ~p terminated.~nReason: ~p", [Name, From, Reason]),
@@ -64,7 +65,6 @@ handle_info(start_children, State) ->
     ulog:info("Starting children"),
     Supervisor = State#state.supervisor,
     [{jids, JidConfigList}] = ets:lookup(config, jids),
-    ulog:debug("~p", [JidConfigList]),
     lists:foreach(fun(ConfigEntry) ->
                           ConfigMap = config:parse(jid_config, 
                                                    ConfigEntry),
