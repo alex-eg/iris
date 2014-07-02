@@ -2,9 +2,10 @@
 -export([run/2]).
 -behavior(iris_command).
 
-run("", _) ->
+run(["@tw"], _) ->
     "A hollow voice says, 'Fool'";
-run(Twit, _) ->
+run(["@tw"|ArgList], _) ->
+    Tweet = string:join(ArgList, " "),
     [{twitter_api, ApiConfig}] = gen_server:call(core, {get_config, twitter_api}),
     ConsumerKey = proplists:get_value(consumer_key, ApiConfig),
     ConsumerSecret = proplists:get_value(consumer_secret, ApiConfig),
@@ -15,10 +16,13 @@ run(Twit, _) ->
 
     URL = "https://api.twitter.com/1.1/statuses/update.json",
 
-    case oauth:post(URL, [{"status", Twit}], Consumer, AccessToken, AccessTokenSecret) of
+    case oauth:post(URL, [{"status", Tweet}], Consumer, AccessToken, AccessTokenSecret) of
         {ok, _Response} ->
-            Twit;
+            Tweet;
         {errors, Error} ->
             ulog:error("Twitting failed with error: ~p", [Error]),
             "Something went wrong"
-    end.
+    end;
+run(_, _) ->
+    nope.
+
