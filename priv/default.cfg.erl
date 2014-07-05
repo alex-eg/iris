@@ -49,6 +49,7 @@
                    {"room2@conference.server.do", [{nick, "Kick"},
                                                    {password, "room_password"}]}
                   ]},
-           {commands, [last, exit]}
+           {commands, [last, exit]},
+           {plugins, [chat_command]}
           ]}]}
 ].
