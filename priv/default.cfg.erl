@@ -39,7 +39,7 @@
                      {banlist, []}]}
                   ]},
            {commands, [last, exit]},
-           {plugins, [chat_command]}
+           {plugins, [chat_commands]}
           ]},
          {"another_jid@server.do",
           [{resource, "resource"},
@@ -50,6 +50,6 @@
                                                    {password, "room_password"}]}
                   ]},
            {commands, [last, exit]},
-           {plugins, [chat_command]}
+           {plugins, [chat_commands]}
           ]}]}
 ].
