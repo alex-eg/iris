@@ -1,9 +1,4 @@
 [
- {shrinker, [
-             {request_url, "http://xn--jj0a.jp/"},
-             {params, "fUrl=~s&id=~s"}
-            ]},
-
  {denshi_jisho, [
                  {request_url, "http://jisho.org/words?jap=~s&eng=~s&dict=edict"}
                 ]},
