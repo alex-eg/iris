@@ -1,26 +1,22 @@
 -module(shrink).
 -export([run/2]).
--behaviour(iris_command).
+-behavior(iris_command).
 
-run("", _) ->
+run(["@shrink"], _) ->
     "Nothing to shrink-shrink about!";
 
-run(Args, _) ->
-    [{shrinker, Config}] = gen_server:call(core, {get_config, shrinker}),
-    Base = proplists:get_value(request_url, Config),
-    Params = proplists:get_value(params, Config),
-    Tokens = string:tokens(Args, " "),
-    parse(Tokens, Base, Params).
+run(["@shrink"|Args], _) ->
+    QueryURL = string:join(Args, " "),
+    EncodedQueryURL = http_uri:encode(QueryURL),
+    EncodedQueryURL,
+    {{_, 200, _}, _, ResponseJSON} = misc:httpc_request(post, {"http://api.xn--jj0a.jp/generate.json", [{"User-Agent", "iris/1.0"}],
+                                                               "application/x-www-form-urlencoded", "fUrl=" ++ EncodedQueryURL ++ "&id="}, [], []),
+    parse(ResponseJSON);
+run(_, _) -> nope.
 
-parse([URL], Base, Params) ->
-    EncodedURL = http_uri:encode(URL),
-    {{_, 200, _}, _, ResponseJSON} = gen_server:call(core, {get_http,
-                                                            post,
-                                                            {Base, [{"User-Agent", "Maribel/1.0"}],
-                                                             "application/x-www-form-urlencoded",
-                                                             "fUrl=" ++ EncodedURL ++ "&id="},
-                                                            [], []}),
-    {[{<<"result">>, {Response}}]} = jiffy:decode(list_to_binary(ResponseJSON)),
-    {_, Result} = lists:keyfind(<<"generated">>, 1, Response),
-    binary_to_list(Result).
-
+parse(ResponseJSON) ->
+    case jiffy:decode(list_to_binary(ResponseJSON)) of
+        {[{<<"result">>, {Response}}]} -> {_, Result} = lists:keyfind(<<"generated">>, 1, Response),
+            binary_to_list(Result);
+        {[{<<"error">>, Response}]} -> Response
+    end.
