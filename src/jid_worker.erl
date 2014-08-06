@@ -34,9 +34,11 @@ init(State) ->
                          Server,
                          jid_config:resource(Config)),
     exmpp_session:auth_info(Session, Jid, jid_config:password(Config)),
-    {ok, _StreamID, _Features} = exmpp_session:connect_TCP(Session,
-                                                           Server,
-                                                           jid_config:port(Config)),
+    Response = exmpp_session:connect_TCP(Session, Server, jid_config:port(Config)),
+    case Response of
+        {ok, _StreamID, _Features} -> ok;
+        _Else -> ulog:debug(Response)
+    end,
     exmpp_session:login(Session, "DIGEST-MD5"),
     exmpp_session:send_packet(Session,
                               exmpp_presence:set_status(

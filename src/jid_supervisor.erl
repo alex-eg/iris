@@ -4,6 +4,10 @@
 -export([start_link/2]).
 
 start_link(Config, Name) ->
+    %case supervisor:start_link({local, Name}, ?MODULE, [Config]) of
+    %    {ok, _Pid} -> {ok, _Pid};
+    %    {error, Error} -> ulog:error("start_link returned ~p", [Error])
+    %end.
     {ok, _Pid} = supervisor:start_link({local, Name}, ?MODULE, [Config]).
 
 init([Config]) ->
