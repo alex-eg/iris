@@ -1,4 +1,4 @@
--module(user_message_storage).
+-module(message_storage).
 -behaviour(iris_plugin).
 
 -export([start/3, process_message/2]).
@@ -8,7 +8,7 @@ start(_Parent, Config, _From) ->
 
 process_message(Message, Config) ->
        Type = message:type(Message),
-    case Type of 
+    case Type of
         chat ->
             process_chat(Message, Config);
         groupchat ->
