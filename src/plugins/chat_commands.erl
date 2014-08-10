@@ -3,8 +3,6 @@
 
 -export([start/3, process_message/2]).
 
--define(DEFAULT_COMMAND_PREFIX, "@").
-
 start(_Parent, _Config, _From) ->
     okay.
 
