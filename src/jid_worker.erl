@@ -52,9 +52,15 @@ init(State) ->
     gen_server:cast(core, {connected, self(), State#state.name}),
     {ok, NewState}.
 
+handle_call({store_config, Item}, _From, State) ->
+    Config = State#state.config,
+    NewOtherConfig = [Item|jid_config:other_config(Config)],
+    NewConfig = jid_config:update(Config, other_config, NewOtherConfig),
+    {reply, ok, State#state{config = NewConfig}};
 handle_call(Any, _From, State) ->
     ulog:info("Recieved unknown call: ~p", [Any]),
     {noreply, State}.
+
 
 handle_cast(start_plugins, State) ->
     Config = State#state.config,
@@ -119,6 +125,11 @@ terminate(Reason, State) ->
     gen_server:cast(core, {terminated, self(), Reason}),
     ok.
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
+
+%% interface functions
+
+store_config(Item, Pid) ->
+    gen_server:call(Pid, {store_config, Item}).
 
 %% gen_server callbacks end
 
