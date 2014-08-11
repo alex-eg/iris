@@ -36,3 +36,6 @@ plugins(State) ->
 
 other_config(State) ->
     maps:get(other, State).
+
+update(State, Key, NewValue) ->
+    maps:update(Key, NewValue, State).
