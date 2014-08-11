@@ -2,13 +2,13 @@
 -export([run/2]).
 -behavior(iris_command).
 
-run("", From) ->
+run(["@qw"], From) ->
     qw_last_message(1, From);
-run("1", From) ->
+run(["@qw", "1"], From) ->
     qw_last_message(1, From);
-run("2", From) ->
+run(["@qw", "2"], From) ->
     qw_last_message(2, From);
-run("3", From) ->
+run(["@qw", "3"], From) ->
     qw_last_message(3, From);
 run(String, _) ->
     qw(String).
@@ -54,4 +54,3 @@ index_of(Item, List) -> index_of(Item, List, 1).
 index_of(_, [], _)  -> not_found;
 index_of(Item, [Item|_], Index) -> Index;
 index_of(Item, [_|Tl], Index) -> index_of(Item, Tl, Index + 1).
-
