@@ -10,7 +10,7 @@ process_message(Message, Config) ->
     Type = message:type(Message),
     case Type of 
         groupchat ->
-            preprocess_groupchat(Message, Config);
+            process_groupchat(Message, Config);
             %ulog:warning(?MODULE, "Message: ~p", [message:raw(Message)]);
         error ->
             ulog:warning(?MODULE, "got XMPP error stanza: ~p", [message:raw(Message)]);
@@ -18,26 +18,25 @@ process_message(Message, Config) ->
             ulog:error(?MODULE, "got unknown message type: ~s", [Type])
     end.
 
-preprocess_groupchat(Message, Config) ->
+process_groupchat(Message, Config) ->
     Stamp = exmpp_xml:get_element(message:raw(Message), delay), %% removing history messages
     case Stamp of
-        undefined -> process_groupchat(Message, Config);
+        undefined -> process_text(Message, Config);
+        %undefined -> ulog:debug("[~s] message: ~s", [?MODULE, message:body(Message)]);
         _ -> ok
     end.
 
-process_groupchat(Message, Config) ->
-    Words = string:tokens(message:body(Message), " "),
-    lists:map(fun (Word) -> process_word(Word, Message, Config) end, Words).
-
-process_word(Word, Message, Config) ->
-    Match = re:run(Word, "https?:\/\/.*"),
+process_text(Message, Config) ->
+    Match = re:run(message:body(Message), "((https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})(\/(?:[\/\w\.-]*)*\/?)?([\/?#][^ ]*))", [{capture, [1]}]),
     case Match of
         nomatch    -> ok;
-        {match, _} ->
-            ulog:debug("[~s] matched ~s", [?MODULE, Word]),
-            MaybeResponse = misc:httpc_request(get, {Word, []}, [], []),
+        {match, [{Start,Length}]} ->
+            %ulog:debug("[~s] matched ~p [~s]", [?MODULE, {Start, Length}, message:body(Message)]),
+            URL = string:substr(message:body(Message), Start+1,Length),
+            MaybeResponse = misc:httpc_request(get, {URL, []}, [], []),
             process_response(Message, MaybeResponse)
     end.
+
 
 process_response(Message, {{_, 200, _}, _, Page}) ->
     MaybeTitle = extract_title(mochiweb_html:parse(Page)),
