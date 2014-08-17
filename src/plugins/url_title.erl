@@ -31,29 +31,54 @@ process_text(Message, Config) ->
     case Match of
         nomatch    -> ok;
         {match, [{Start,Length}]} ->
-            %ulog:debug("[~s] matched ~p [~s]", [?MODULE, {Start, Length}, message:body(Message)]),
+            ulog:debug("[~s] matched ~p [~s]", [?MODULE, {Start, Length}, message:body(Message)]),
             URL = string:substr(message:body(Message), Start+1,Length),
-            MaybeResponse = misc:httpc_request(get, {URL, []}, [], []),
-            process_response(Message, MaybeResponse)
+            Response = misc:httpc_request(head, {URL, []}, [], []),
+            process_response(Message, Response, URL)
     end.
 
 
-process_response(Message, {{_, 200, _}, _, Page}) ->
-    MaybeTitle = extract_title(mochiweb_html:parse(Page)),
-    case MaybeTitle of
-        false ->
-            ok;
-        {<<"title">>, [], [Title]} ->
-            From = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
-            [RoomJid|_] = string:tokens(misc:format_str("~s",[From]),"/"),
-            jid_worker:reply("Page title: " ++ Title, RoomJid);
-        Any -> 
-            ulog:error("[~s] got title tag: ~s", [?MODULE, Any]),
-            ok
+process_response(Message, {{_, 200, _}, List, _}, URL) ->
+    {"content-type", Type} = lists:keyfind("content-type", 1, List),
+    ulog:debug("[~s] type: ~p", [?MODULE, Type]),
+    From = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
+    [RoomJid|_] = string:tokens(misc:format_str("~s",[From]),"/"),
+    Position = string:str(Type, "text/html"),
+    if Position >= 1 ->
+            Response = misc:httpc_request(get, {URL, []}, [], []),
+            process_response2(Message, Response);
+        true ->
+            ImageFormats = ["image/png", "image/gif", "image/jpeg", "image/webp"],
+            Exist = lists:member(Type, ImageFormats),
+            case Type of
+                _ when Exist == true ->
+                    {"content-length", LengthStr} = lists:keyfind("content-length", 1, List),
+                    {Length, _} = string:to_integer(LengthStr),
+                    HumanLen = float_to_list(Length/1024,[{decimals, 2}, compact]),
+                    jid_worker:reply("Content-type: " ++ Type ++ ", length: " ++ HumanLen ++ " KiB", RoomJid);
+                _ ->
+                    jid_worker:reply("Content-type: " ++ Type, RoomJid)
+            end
     end;
-process_response(_Message, _Other) ->
+process_response(_Message, _Other, _URL) ->
     ok.
 
+process_response2(Message, {{_, 200, _}, _, Page}) ->
+    MaybeTitle = extract_title(mochiweb_html:parse(Page)),
+            case MaybeTitle of
+                false ->
+                    ok;
+                {<<"title">>, [], [Title]} ->
+                    From = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
+                    [RoomJid|_] = string:tokens(misc:format_str("~s",[From]),"/"),
+                    jid_worker:reply("Page title: " ++ Title, RoomJid);
+                Any -> 
+                    ulog:error("[~s] got title tag: ~s", [?MODULE, Any]),
+                    ok
+            end;
+process_response2(_Message, _Other) ->
+    ok.
+    
 extract_title({<<"html">>, _, [Head|_]}) ->
     {<<"head">>, _, HeadChildren} = Head,
     lists:keyfind(<<"title">>, 1, HeadChildren);

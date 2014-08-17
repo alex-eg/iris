@@ -13,7 +13,6 @@ clean:
 	rm -f *.dump
 
 compile:
-	rebar get-deps
 	rebar compile
 
 deps:
