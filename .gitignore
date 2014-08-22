@@ -3,3 +3,4 @@ cfg.erl
 deps
 *.dump
 .rebar
+log
