@@ -14,7 +14,7 @@ OAuth protocol library by [erlang oauth](https://github.com/tim/erlang-oauth)
 
 HTML parsing by [mochiweb html parser](https://github.com/mochi/mochiweb)
 
-Logging by [lager](git://github.com/basho/lager)
+Logging by [lager](https://github.com/basho/lager)
 
 API
 ---
