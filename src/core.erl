@@ -13,7 +13,10 @@ start_link(SupRef) ->
     gen_server:start_link({local, core}, ?MODULE, State, []).
 
 init(State) ->
+
     ok = application:ensure_started(exmpp),
+
+    ok = application:ensure_started(lager),
 
     ok = application:ensure_started(crypto),
     ok = application:ensure_started(asn1),
