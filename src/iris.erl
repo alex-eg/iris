@@ -1,15 +1,15 @@
 -module(iris).
 -behavior(supervisor).
 -behavior(application).
--export([start_shortcut/0]).
+-export([start/0]).
 -export([start/2, stop/1]).
 -export([init/1]).
 
 -include("xmpp.hrl").
 
 %% Cheater's shortcut
-start_shortcut() ->
-    application:start(iris).
+start() ->
+    application:ensure_all_started(iris).
 
 %% Application behavior callbacks
 start(normal, _StartArgs) ->

@@ -13,16 +13,6 @@ start_link(SupRef) ->
     gen_server:start_link({local, core}, ?MODULE, State, []).
 
 init(State) ->
-
-    ok = application:ensure_started(exmpp),
-
-    ok = application:ensure_started(crypto),
-    ok = application:ensure_started(asn1),
-    ok = application:ensure_started(public_key), 
-    ok = application:ensure_started(ssl),
-    ok = application:ensure_started(inets),
-
-    SupervisorPid = State#state.supervisor,
     lager:info("Core node started and has pid ~p", [self()]),
 
     %% Global config table, everyone can retrieve information from here
