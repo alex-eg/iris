@@ -3,8 +3,8 @@ IRIS
 
 Iris is a toy jabber bot.
 
-Deps
-----
+Deps and credits
+----------------
 
 JSON processing by [jiffy](https://github.com/davisp/jiffy)
 
@@ -12,7 +12,9 @@ XMPP handling by [excellent Process One's library](http://processone.github.com/
 
 OAuth protocol library by [erlang oauth](https://github.com/tim/erlang-oauth)
 
-HTML parsing by [mochiweb html parser](https://github.com/mochi/mochiweb.git)
+HTML parsing by [mochiweb html parser](https://github.com/mochi/mochiweb)
+
+Logging by [lager](git://github.com/basho/lager)
 
 API
 ---
