@@ -25,3 +25,5 @@ debug: compile
 debug_sasl: all
 	cd ebin
 	erl -pa ebin deps/*/ebin -boot start_sasl -config priv/iris.config -s $(NAME)
+
+.PHONY: clean get-deps
