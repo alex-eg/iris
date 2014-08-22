@@ -13,9 +13,6 @@ start() ->
 
 %% Application behavior callbacks
 start(normal, _StartArgs) ->
-    lager:start(),
-    ok = application:ensure_started(lager),
-
     lager:info("#-------------=======================-------------#"),
     lager:info("|---------======== IRIS starting ========---------|"),
     lager:info("#-------------=======================-------------#"),

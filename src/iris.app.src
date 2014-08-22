@@ -3,6 +3,6 @@
   {vsn, "0.2.0"},
   {registered, [root, main_sup]},
   {mod, {iris,[]}},
-  {applications, [kernel, stdlib, ssl, inets, lager, exmpp]},
+  {applications, [lager, kernel, stdlib, ssl, inets, exmpp]},
   {env, []}
  ]}.
