@@ -1,6 +1,10 @@
 -module(exit).
--export([respond_to_message/2]).
+-export([run/2]).
+-behavior(iris_command).
 
-respond_to_message(_Argument, _LastMessages) ->
-    exit("I SAID SO!").
+run(["@exit"], _) ->
+    exit("I SAID SO!");
+run(_, _) ->
+    nope.
+
    
