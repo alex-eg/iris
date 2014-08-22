@@ -2,6 +2,6 @@
 -export([run/1]).
 
 run(_ArgumentString) ->
-    ulog:info("Commiting suicide!"),
+    lager:info("Commiting suicide!"),
     1 / 0,
     ok.

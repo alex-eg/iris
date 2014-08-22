@@ -14,9 +14,9 @@ process_message(Message, Config) ->
         groupchat ->
             preprocess_groupchat(Message, Config);
         error ->
-            ulog:warning(?MODULE, "got XMPP error stanza: ~p", [message:raw(Message)]);
+            lager:warning(?MODULE, "got XMPP error stanza: ~p", [message:raw(Message)]);
         _Other ->
-            ulog:error(?MODULE, "got unknown message type: ~s", [Type])
+            lager:error(?MODULE, "got unknown message type: ~s", [Type])
     end.
 
 process_chat(Message, Config) ->
@@ -24,7 +24,7 @@ process_chat(Message, Config) ->
     lists:foreach(fun(Command) ->
                           Response = Command:run(string:tokens(message:body(Message), " "),
                                                  message:from(Message)),
-                          ulog:debug("Command ~s returned ~p", [Command, Response]),
+                          lager:debug("Command ~s returned ~p", [Command, Response]),
                           case Response of
                               nope -> ok;
                               _ -> Jid = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
@@ -43,7 +43,7 @@ preprocess_groupchat(Message, Config) ->
 process_groupchat(Message, Config) ->
     RoomConfList = jid_config:room_confs(Config),
     FromRoom = message:from_room(Message),
-    %% ulog:debug("Message from room ~s", [FromRoom]),
+    %% lager:debug("Message from room ~s", [FromRoom]),
     [RoomConfig] = lists:filter(fun(RoomConf) ->
                                         room_config:jid(RoomConf) == FromRoom
                                 end,

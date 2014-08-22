@@ -11,18 +11,18 @@ process_message(Message, Config) ->
     case Type of 
         groupchat ->
             process_groupchat(Message, Config);
-            %ulog:warning(?MODULE, "Message: ~p", [message:raw(Message)]);
+            %lager:warning(?MODULE, "Message: ~p", [message:raw(Message)]);
         error ->
-            ulog:warning(?MODULE, "got XMPP error stanza: ~p", [message:raw(Message)]);
+            lager:warning(?MODULE, "got XMPP error stanza: ~p", [message:raw(Message)]);
         _Other ->
-            ulog:error(?MODULE, "got unknown message type: ~s", [Type])
+            lager:error(?MODULE, "got unknown message type: ~s", [Type])
     end.
 
 process_groupchat(Message, Config) ->
     Stamp = exmpp_xml:get_element(message:raw(Message), delay), %% removing history messages
     case Stamp of
         undefined -> process_text(Message, Config);
-        %undefined -> ulog:debug("[~s] message: ~s", [?MODULE, message:body(Message)]);
+        %undefined -> lager:debug("[~s] message: ~s", [?MODULE, message:body(Message)]);
         _ -> ok
     end.
 
@@ -31,7 +31,7 @@ process_text(Message, Config) ->
     case Match of
         nomatch    -> ok;
         {match, [{Start,Length}]} ->
-            ulog:debug("[~s] matched ~p [~s]", [?MODULE, {Start, Length}, message:body(Message)]),
+            lager:debug("[~s] matched ~p [~s]", [?MODULE, {Start, Length}, message:body(Message)]),
             URL = string:substr(message:body(Message), Start+1,Length),
             Response = misc:httpc_request(head, {URL, []}, [], []),
             process_response(Message, Response, URL)
@@ -40,7 +40,7 @@ process_text(Message, Config) ->
 
 process_response(Message, {{_, 200, _}, List, _}, URL) ->
     {"content-type", Type} = lists:keyfind("content-type", 1, List),
-    ulog:debug("[~s] type: ~p", [?MODULE, Type]),
+    lager:debug("[~s] type: ~p", [?MODULE, Type]),
     From = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
     [RoomJid|_] = string:tokens(misc:format_str("~s",[From]),"/"),
     Position = string:str(Type, "text/html"),
@@ -73,7 +73,7 @@ process_response2(Message, {{_, 200, _}, _, Page}) ->
                     [RoomJid|_] = string:tokens(misc:format_str("~s",[From]),"/"),
                     jid_worker:reply("Page title: " ++ Title, RoomJid);
                 Any -> 
-                    ulog:error("[~s] got title tag: ~s", [?MODULE, Any]),
+                    lager:error("[~s] got title tag: ~s", [?MODULE, Any]),
                     ok
             end;
 process_response2(_Message, _Other) ->
@@ -86,4 +86,4 @@ extract_title({<<"head">>, _, HeadChildren}) ->
     lists:keyfind(<<"title">>, 1, HeadChildren);
 extract_title(SomethingElse) ->
     "Mysterios occurence. Investigation required!",
-    ulog:error("[~s] mochiveb parsed: ~t", [?MODULE, SomethingElse]).
+    lager:error("[~s] mochiveb parsed: ~t", [?MODULE, SomethingElse]).

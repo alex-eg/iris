@@ -20,7 +20,7 @@ run(["@tw"|ArgList], _) ->
         {ok, _Response} ->
             Tweet;
         {errors, Error} ->
-            ulog:error("Twitting failed with error: ~p", [Error]),
+            lager:error("Twitting failed with error: ~p", [Error]),
             "Something went wrong"
     end;
 run(_, _) ->

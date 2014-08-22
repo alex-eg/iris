@@ -21,7 +21,7 @@ translate(ArgList, Direction) ->
         ++ "&lang=" ++ Direction,
     {{_, _, _}, _, ResponseJSON} = misc:httpc_request(get, {QueryURL, []}, [], []),
     {Response} = jiffy:decode(list_to_binary(ResponseJSON)),
-    ulog:debug("translate retuned: ~p", [Response]),
+    lager:debug("translate retuned: ~p", [Response]),
     {<<"code">>, ResultCode} = lists:keyfind(<<"code">>, 1, Response),
     extract_result(ResultCode, Response).
 

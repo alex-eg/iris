@@ -3,7 +3,7 @@
 
 -export([start/3, process_message/2]).
 
-start(_Parent, Config, _From) ->
+start(_Parent, _Config, _From) ->
     ok.
 
 process_message(Message, Config) ->
@@ -14,9 +14,9 @@ process_message(Message, Config) ->
         groupchat ->
             preprocess_groupchat(Message, Config);
         error ->
-            ulog:warning(?MODULE, "got XMPP error stanza: ~p", [message:raw(Message)]);
+            lager:warning(?MODULE, "got XMPP error stanza: ~p", [message:raw(Message)]);
         _Other ->
-            ulog:error(?MODULE, "got unknown message type: ~s", [Type])
+            lager:error(?MODULE, "got unknown message type: ~s", [Type])
     end.
 
 process_chat(Message, Config) ->
