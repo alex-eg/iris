@@ -1,12 +1,7 @@
 -module(config).
--export([read/1, parse/2]).
+-export([parse/2]).
 
 -include("xmpp.hrl").
-
-read(Filename) ->
-    {ok, [ConfigList]} = file:consult(Filename),
-    lager:info("Read configuration file ~s", [Filename]),
-    ConfigList.
 
 parse(jid_config, {Jid, Config}) ->
     Port = proplists:get_value(port, Config, 5222),

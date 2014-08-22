@@ -20,8 +20,8 @@ commands:
 
 debug: compile
 	cd ebin
-	erl -noshell -pa ebin deps/*/ebin -s $(NAME)
+	erl -noshell -pa ebin deps/*/ebin -config priv/cfg.erl -s $(NAME)
 
 debug_sasl: all
 	cd ebin
-	erl -pa ebin deps/*/ebin -boot start_sasl -s $(NAME)
+	erl -pa ebin deps/*/ebin -boot start_sasl -config priv/cfg.erl -s $(NAME)

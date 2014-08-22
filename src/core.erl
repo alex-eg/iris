@@ -17,7 +17,7 @@ init(State) ->
 
     %% Global config table, everyone can retrieve information from here
     %% calling core server with get_info request
-    ConfigList = config:read(?DEFAULT_CONFIG_FILE),
+    ConfigList = application:get_all_env(iris),
     ets:new(config, [named_table, bag]),
     lists:foreach(fun(X) ->
                           ets:insert(config, X)
