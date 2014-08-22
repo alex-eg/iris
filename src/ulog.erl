@@ -1,8 +1,8 @@
 -module(ulog).
--export([debug/3, debug/2, debug/1]).
--export([error/3, error/2, error/1]).
--export([info/3, info/2, info/1]).
--export([warning/3, warning/2, warning/1]).
+-export([debug/2, debug/1]).
+-export([error/2, error/1]).
+-export([info/2, info/1]).
+-export([warning/2, warning/1]).
 
 out(Level, Format, Args) ->
     Record = io_lib:format(Format, Args),
