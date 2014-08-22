@@ -1,16 +1,9 @@
 NAME = iris
-ENTRY = start_shortcut
 
 all: clean compile
 
 clean:
-	rm -f src/*~
-	rm -f src/*.beam
-	rm -f src/modules/*~
-	rm -f src/modules/*.beam
-	rm -f *~
-	rm -f ebin/*.beam
-	rm -f *.dump
+	rebar clean
 
 compile:
 	rebar compile
@@ -18,19 +11,17 @@ compile:
 deps:
 	rebar get-deps
 
-modules: deps behaviours
-	rebar get-deps
+modules: deps
 	erlc -I ./include -o ./ebin ./src/behaviours/*.erl
 	erlc -I ./include -pa ./ebin -o ./ebin ./src/modules/*.erl
 
 commands:
-	rebar get-deps
 	erlc -I ./include -o ./ebin ./src/commands/*.erl
 
-debug: all
+debug: compile
 	cd ebin
-	erl -noshell -pa ebin deps/*/ebin -s $(NAME) $(ENTRY)
+	erl -noshell -pa ebin deps/*/ebin -s $(NAME)
 
 debug_sasl: all
 	cd ebin
-	erl -pa ebin deps/*/ebin -boot start_sasl -s $(NAME) $(ENTRY)
+	erl -pa ebin deps/*/ebin -boot start_sasl -s $(NAME)
