@@ -11,18 +11,16 @@ process_message(Message, Config) ->
     case Type of 
         groupchat ->
             process_groupchat(Message, Config);
-            %lager:warning(?MODULE, "Message: ~p", [message:raw(Message)]);
         error ->
-            lager:warning(?MODULE, "got XMPP error stanza: ~p", [message:raw(Message)]);
+            lager:warning("got XMPP error stanza: ~p", [message:raw(Message)]);
         _Other ->
-            lager:error(?MODULE, "got unknown message type: ~s", [Type])
+            lager:error("got unknown message type: ~s", [Type])
     end.
 
 process_groupchat(Message, Config) ->
     Stamp = exmpp_xml:get_element(message:raw(Message), delay), %% removing history messages
     case Stamp of
         undefined -> process_text(Message, Config);
-        %undefined -> lager:debug("[~s] message: ~s", [?MODULE, message:body(Message)]);
         _ -> ok
     end.
 

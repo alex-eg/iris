@@ -14,9 +14,9 @@ process_message(Message, Config) ->
         groupchat ->
             preprocess_groupchat(Message, Config);
         error ->
-            lager:warning(?MODULE, "got XMPP error stanza: ~p", [message:raw(Message)]);
+            lager:warning("got XMPP error stanza: ~p", [message:raw(Message)]);
         _Other ->
-            lager:error(?MODULE, "got unknown message type: ~s", [Type])
+            lager:error("got unknown message type: ~s", [Type])
     end.
 
 process_chat(Message, Config) ->
@@ -43,7 +43,6 @@ preprocess_groupchat(Message, Config) ->
 process_groupchat(Message, Config) ->
     RoomConfList = jid_config:room_confs(Config),
     FromRoom = message:from_room(Message),
-    %% lager:debug("Message from room ~s", [FromRoom]),
     [RoomConfig] = lists:filter(fun(RoomConf) ->
                                         room_config:jid(RoomConf) == FromRoom
                                 end,

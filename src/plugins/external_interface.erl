@@ -57,7 +57,7 @@ handle_info(_Msg, State) ->
     {noreply, State}.
 
 terminate(Reason, _State) ->
-    lager:info("external_interface", "server terminated. Reason: ~p", [Reason]),
+    lager:info("server terminated. Reason: ~p", [Reason]),
     ok.
 
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
@@ -65,7 +65,7 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 %% gen_server callbacks end
 
 accept_loop(Parent, LSocket, Subscriber, Recepient) ->
-    lager:debug("accept_loop", "started successfully!", []),
+    lager:debug("started successfully!", []),
     {ok, Socket} = gen_tcp:accept(LSocket),
     loop(Socket, Subscriber, Recepient),
     gen_server:cast(Parent, wait_for_connection),
@@ -74,12 +74,12 @@ accept_loop(Parent, LSocket, Subscriber, Recepient) ->
 loop(Socket, Subscriber, Recepient) ->
     case gen_tcp:recv(Socket, 0) of
         {ok, Data} ->
-            lager:debug("external_interface", "recieved data via socket: ~p", [Data]),
+            lager:debug("recieved data via socket: ~p", [Data]),
             Message = binary_to_list(Data),
             gen_server:cast(Subscriber, {send_message, Message, Recepient}),
             loop(Socket, Subscriber, Recepient);
         {error, closed} ->
-            lager:debug("external_interface", "shutting down...", ""),
+            lager:debug("shutting down...", ""),
             ok
     end.
 

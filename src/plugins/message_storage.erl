@@ -14,9 +14,9 @@ process_message(Message, Config) ->
         groupchat ->
             preprocess_groupchat(Message, Config);
         error ->
-            lager:warning(?MODULE, "got XMPP error stanza: ~p", [message:raw(Message)]);
+            lager:warning("got XMPP error stanza: ~p", [message:raw(Message)]);
         _Other ->
-            lager:error(?MODULE, "got unknown message type: ~s", [Type])
+            lager:error("got unknown message type: ~s", [Type])
     end.
 
 process_chat(Message, Config) ->
