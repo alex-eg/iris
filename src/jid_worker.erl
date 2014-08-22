@@ -27,6 +27,7 @@ start_link(Config, Name, Supervisor) ->
 % gen_server callbacks
 
 init(State) ->
+    lager:info("Jid worker ~p started and has pid ~p", [State#state.name, self()]),
     Config = State#state.config,
     Session = exmpp_session:start({1, 0}), %% retardation needed to start SSL authorization
     [Name, Server] = string:tokens(jid_config:jid(Config), "@"),
@@ -37,7 +38,7 @@ init(State) ->
     Response = exmpp_session:connect_TCP(Session, Server, jid_config:port(Config)),
     case Response of
         {ok, _StreamID, _Features} -> ok;
-        _Else -> ulog:debug(Response)
+        _Else -> lager:debug(Response)
     end,
     exmpp_session:login(Session, "DIGEST-MD5"),
     exmpp_session:send_packet(Session,
@@ -58,16 +59,16 @@ handle_call({store_config, Item}, _From, State) ->
     NewConfig = jid_config:update(Config, other_config, NewOtherConfig),
     {reply, ok, State#state{config = NewConfig}};
 handle_call(Any, _From, State) ->
-    ulog:info("Recieved unknown call: ~p", [Any]),
+    lager:info("Recieved unknown call: ~p", [Any]),
     {noreply, State}.
 
 
 handle_cast(start_plugins, State) ->
     Config = State#state.config,
     PluginList = jid_config:plugins(Config),
-    ulog:info(State#state.name, "found plugins: ~p", [PluginList]),
+    lager:info("found plugins: ~p", [PluginList]),
     lists:foreach(fun(Plugin) ->
-                          ulog:info(State#state.name, "starting plugin: ~p", [Plugin]),
+                          lager:info("starting plugin: ~p", [Plugin]),
                           %% Hook point #1
                           Plugin:start(State#state.supervisor,
                                        Config,
@@ -100,7 +101,7 @@ handle_cast(send_muc_keepalive, State) ->
     %% TODD: whitespace ping goes here
     {noreply, State};
 handle_cast(Any, State) ->
-    ulog:info("Recieved unknown cast: '~p'", [Any]),
+    lager:info("Recieved unknown cast: '~p'", [Any]),
     {noreply, State}.
 
 %% XMPP packets are handled via handle_info for some reason
@@ -111,16 +112,16 @@ handle_info(#received_packet{packet_type = message, raw_packet = Packet}, State)
     process_message(Message, Config),
     {noreply, State};
 handle_info(#received_packet{packet_type = PacketType, raw_packet = Packet}, State) ->
-    %% ulog:debug("Resieved XMPP packet~ntype: ~p~npacket: ~p", [PacketType, Packet]),
+    %% lager:debug("Resieved XMPP packet~ntype: ~p~npacket: ~p", [PacketType, Packet]),
     {noreply, State};
 handle_info(Msg, State) -> 
-    ulog:info("Recieved unknown message: '~p'", [Msg]),
+    lager:info("Recieved unknown message: '~p'", [Msg]),
     {noreply, State}.
 
 terminate(Reason, State) ->
     Session = State#state.session,
     exmpp_session:stop(Session),
-    ulog:info("worker ~p with pid ~p terminated.~nReason: ~p",
+    lager:info("worker ~p with pid ~p terminated.~nReason: ~p",
               [State#state.name, self(), Reason]),
     gen_server:cast(core, {terminated, self(), Reason}),
     ok.
@@ -136,13 +137,13 @@ store_config(Item, Pid) ->
 process_message(Message, Config) ->
     Plugins = jid_config:plugins(Config),
     lists:foreach(fun(Plugin) ->
-                          %% ulog:debug("passing message in plugin ~s", [Plugin]),
+                          %% lager:debug("passing message in plugin ~s", [Plugin]),
                           %% Hook point #2
                           Plugin:process_message(Message, Config)
                   end,
                   Plugins).
 reply(Message, Recepient) ->
-    %% ulog:debug("replying ~p with ~p", [Recepient, Message]),
+    %% lager:debug("replying ~p with ~p", [Recepient, Message]),
     gen_server:cast(self(), {send_message, Message, Recepient}).
 
 %% Low-level xmpp package creation

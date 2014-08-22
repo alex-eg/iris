@@ -8,7 +8,7 @@ join_groupchat(Session, RoomConfig) ->
     Room = room_config:jid(RoomConfig),
     Nick = room_config:nick(RoomConfig),
     Password = room_config:password(RoomConfig),
-    ulog:info("Joining ~s as ~s", [Room, Nick]),
+    lager:info("Joining ~s as ~s", [Room, Nick]),
     Presence = create_presence(Room, Nick, Password),
     exmpp_session:send_packet(Session, Presence).
 

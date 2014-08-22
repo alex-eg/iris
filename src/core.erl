@@ -16,8 +16,6 @@ init(State) ->
 
     ok = application:ensure_started(exmpp),
 
-    ok = application:ensure_started(lager),
-
     ok = application:ensure_started(crypto),
     ok = application:ensure_started(asn1),
     ok = application:ensure_started(public_key), 
@@ -25,7 +23,7 @@ init(State) ->
     ok = application:ensure_started(inets),
 
     SupervisorPid = State#state.supervisor,
-    ulog:info("Core node started and has pid ~p, supervisor process is ~p", [self(), SupervisorPid]),
+    lager:info("Core node started and has pid ~p", [self()]),
 
     %% Global config table, everyone can retrieve information from here
     %% calling core server with get_info request
@@ -43,25 +41,25 @@ handle_call({get_config, Key}, _From, State) ->
     Reply = ets:lookup(config, Key),
     {reply, Reply, State};
 handle_call(Any, _Caller, State) -> 
-    ulog:info("Recieved unknown request: ~p", [Any]),
+    lager:info("Recieved unknown request: ~p", [Any]),
     {noreply, State}.
 
 handle_cast({connected, From, Name}, State) ->
-    ulog:info("Worker ~p has connected with pid ~p, starting plugins", [Name, From]),
+    lager:info("Worker ~p has connected with pid ~p, starting plugins", [Name, From]),
     ets:insert(workers, {From, Name}),
     gen_server:cast(From, start_plugins),
     {noreply, State};
 handle_cast({started_plugins, From, Name}, State) ->
-    ulog:info("Worker ~p has connected plugins, joining rooms", [Name]),
+    lager:info("Worker ~p has connected plugins, joining rooms", [Name]),
     gen_server:cast(From, join_rooms),
     {noreply, State};
 handle_cast({terminated, From, Reason}, State) ->
     [{_, Name}] = ets:lookup(workers, From),
-    ulog:info("Worker ~p for jid ~p terminated.~nReason: ~p", [Name, From, Reason]),
+    lager:info("Worker ~p for jid ~p terminated.~nReason: ~p", [Name, From, Reason]),
     ets:delete_object(workers, {From, Name}),
     {noreply, State};
 handle_cast(start_children, State) ->
-    ulog:info("Starting children"),
+    lager:info("Starting children"),
     Supervisor = State#state.supervisor,
     [{jids, JidConfigList}] = ets:lookup(config, jids),
     lists:foreach(fun(ConfigEntry) ->
@@ -72,11 +70,11 @@ handle_cast(start_children, State) ->
                   JidConfigList),
     {noreply, State};
 handle_cast(Any, State) ->
-    ulog:info("Recieved unknown cast: '~p'", [Any]),
+    lager:info("Recieved unknown cast: '~p'", [Any]),
     {noreply, State}.
 
 handle_info(_Msg, State) -> 
-    ulog:info("Recieved unknown message: ~p~n", [_Msg]),
+    lager:info("Recieved unknown message: ~p~n", [_Msg]),
     {noreply, State}.
 
 terminate(Reason, State) ->
@@ -89,7 +87,7 @@ terminate(Reason, State) ->
               ok,
               workers),
     ets:delete(workers),
-    ulog:info("core process with pid ~p terminated. Reason: ~p",
+    lager:info("core process with pid ~p terminated. Reason: ~p",
               [self(), Reason]),
     ok.
 
@@ -99,7 +97,7 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
 start_worker(Config, Supervisor) ->
     Name = list_to_atom(jid_config:jid(Config) ++ "_supervisor"),
-    ulog:info("Starting jid_supervisor for ~p with supervisor ~p", [Name, Supervisor]),
+    lager:info("Starting jid_supervisor for ~p with supervisor ~p", [Name, Supervisor]),
     {ok, _Pid} = supervisor:start_child(Supervisor,
                                         {Name,
                                          {jid_supervisor, start_link, [Config, Name]},

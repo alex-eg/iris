@@ -6,13 +6,13 @@
 start_link(Config, Name) ->
     %case supervisor:start_link({local, Name}, ?MODULE, [Config]) of
     %    {ok, _Pid} -> {ok, _Pid};
-    %    {error, Error} -> ulog:error("start_link returned ~p", [Error])
+    %    {error, Error} -> lager:error("start_link returned ~p", [Error])
     %end.
     {ok, _Pid} = supervisor:start_link({local, Name}, ?MODULE, [Config]).
 
 init([Config]) ->
     WorkerName = list_to_atom(jid_config:jid(Config)),
-    ulog:debug("starting jid_supervisor for ~p, process is ~p", [WorkerName, self()]),
+    lager:debug("Jid supervisor for ~p started and has pid ~p", [WorkerName, self()]),
     {ok, {
        {one_for_all, 1, 10},
        [{WorkerName,

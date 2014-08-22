@@ -5,7 +5,7 @@
 
 read(Filename) ->
     {ok, [ConfigList]} = file:consult(Filename),
-    ulog:info("Read configuration file ~s", [Filename]),
+    lager:info("Read configuration file ~s", [Filename]),
     ConfigList.
 
 parse(jid_config, {Jid, Config}) ->

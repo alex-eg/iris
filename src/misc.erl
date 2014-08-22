@@ -6,10 +6,10 @@ httpc_request(Method, Request, HTTPOptions, Options) ->
         {ok, Response} ->
             Response;
         Any ->
-            ulog:error("Request failed: ~p", [Any])
+            lager:error("Request failed: ~p", [Any])
     catch
         error:Exception ->
-            ulog:error("Exception ~p occcured!", [Exception])
+            lager:error("Exception ~p occcured!", [Exception])
     end.
 
 format_str(Format, Data) ->
