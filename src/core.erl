@@ -33,7 +33,7 @@ init(State) ->
                   end,
                   ConfigList),
     ets:new(workers, [named_table, bag]),
-    self() ! start_children,
+    gen_server:cast(self(), start_children),
     {ok, State}.
 
 handle_call({get_config, Key}, _From, State) ->
@@ -57,11 +57,7 @@ handle_cast({terminated, From, Reason}, State) ->
     ulog:info("Worker ~p for jid ~p terminated.~nReason: ~p", [Name, From, Reason]),
     ets:delete_object(workers, {From, Name}),
     {noreply, State};
-handle_cast(Any, State) ->
-    ulog:info("Recieved unknown cast: '~p'", [Any]),
-    {noreply, State}.
-
-handle_info(start_children, State) ->
+handle_cast(start_children, State) ->
     ulog:info("Starting children"),
     Supervisor = State#state.supervisor,
     [{jids, JidConfigList}] = ets:lookup(config, jids),
@@ -72,6 +68,10 @@ handle_info(start_children, State) ->
                   end,
                   JidConfigList),
     {noreply, State};
+handle_cast(Any, State) ->
+    ulog:info("Recieved unknown cast: '~p'", [Any]),
+    {noreply, State}.
+
 handle_info(_Msg, State) -> 
     ulog:info("Recieved unknown message: ~p~n", [_Msg]),
     {noreply, State}.
