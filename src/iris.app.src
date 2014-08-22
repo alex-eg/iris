@@ -1,8 +1,8 @@
 {application, iris,
  [{description, "Scalable xmpp bot"},
-  {vsn, "0.1.0"},
+  {vsn, "0.2.0"},
   {registered, [root, main_sup]},
   {mod, {iris,[]}},
-  {applications, [kernel]},
+  {applications, [kernel, stdlib, ssl, inets, lager, exmpp]},
   {env, []}
  ]}.
