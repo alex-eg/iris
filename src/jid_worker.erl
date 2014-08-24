@@ -40,7 +40,7 @@ init(State) ->
         {ok, _StreamID, _Features} -> ok;
         _Else -> lager:debug(Response)
     end,
-    exmpp_session:login(Session, "DIGEST-MD5"),
+    exmpp_session:login(Session, jid_config:sasl_auth(Config)),
     exmpp_session:send_packet(Session,
                               exmpp_presence:set_status(
                                 exmpp_presence:available(),

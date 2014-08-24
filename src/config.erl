@@ -6,6 +6,7 @@
 parse(jid_config, {Jid, Config}) ->
     Port = proplists:get_value(port, Config, 5222),
     Resource = proplists:get_value(resource, Config),
+    Authorization = proplists:get_value(sasl_auth, Config),
     Status = proplists:get_value(status, Config, "undefined"),
     Password = proplists:get_value(password, Config),
     RoomConfs = lists:map(fun(RoomCfg) ->
@@ -23,7 +24,8 @@ parse(jid_config, {Jid, Config}) ->
                                                          plugins])
                                end,
                                Config),
-    jid_config:create(Port, Jid, Status, Resource, Password, RoomConfs, Plugins, OtherConfig);
+    jid_config:create(Port, Jid, Authorization, Status, Resource,
+                      Password, RoomConfs, Plugins, OtherConfig);
 parse(room_config, {Jid, Config}) ->
     Password = proplists:get_value(password, Config, nopassword),
     Nick = proplists:get_value(nick, Config),
