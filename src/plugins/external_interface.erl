@@ -1,5 +1,5 @@
 -module(external_interface).
-%%-behavior(gen_server).
+-behavior(gen_server).
 -behavior(iris_plugin).
 -export([start/3, process_message/2]).
 -export([start_link/2, accept_loop/4]).
@@ -15,11 +15,12 @@
         }).
 
 start(Supervisor, WorkerConfig, From) ->
+    lager:info("Starting with supervisor ~p", [Supervisor]),
     {ok, _Pid} = supervisor:start_child(Supervisor,
                                         {external_interface,
                                          {?MODULE, start_link, [WorkerConfig, From]},
                                          transient,
-                                         5000,
+                                         brutal_kill,
                                          worker,
                                          [?MODULE]}).
 
@@ -31,7 +32,7 @@ start_link(WorkerConfig, From) ->
                    port = Port,
                    target_jid = Target
                   },
-    gen_server:start_link({local, external_interface}, ?MODULE, State, []).
+    gen_server:start_link(?MODULE, State, []).
 
 init(State) ->
     Port = State#state.port,
@@ -57,7 +58,7 @@ handle_info(_Msg, State) ->
     {noreply, State}.
 
 terminate(Reason, _State) ->
-    lager:info("server terminated. Reason: ~p", [Reason]),
+    lager:info("External interface server terminated. Reason: ~p", [Reason]),
     ok.
 
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
@@ -85,4 +86,3 @@ loop(Socket, Subscriber, Recepient) ->
 
 process_message(_Msg, _Cfg) ->
     nope.
-
