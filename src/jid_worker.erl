@@ -22,7 +22,7 @@ start_link(Config, Name, Supervisor) ->
                    supervisor = Supervisor,
                    config = Config
                   },
-    gen_server:start_link({local, Name}, ?MODULE, State, []).
+    {ok, _Pid} = gen_server:start_link(?MODULE, State, []).
 
 % gen_server callbacks
 
@@ -38,7 +38,7 @@ init(State) ->
     Response = exmpp_session:connect_TCP(Session, Server, jid_config:port(Config)),
     case Response of
         {ok, _StreamID, _Features} -> ok;
-        _Else -> lager:debug(Response)
+        _Else -> lager:debug("~p", [Response])
     end,
     exmpp_session:login(Session, jid_config:sasl_auth(Config)),
     exmpp_session:send_packet(Session,
@@ -46,12 +46,8 @@ init(State) ->
                                 exmpp_presence:available(),
                                 jid_config:status(Config))
                              ),
-    NewState = State#state{
-                 config = Config,
-                 session = Session
-                },
     gen_server:cast(core, {connected, self(), State#state.name}),
-    {ok, NewState}.
+    {ok, State#state{session = Session}}.
 
 handle_call({store_config, Item}, _From, State) ->
     Config = State#state.config,
@@ -122,7 +118,7 @@ handle_info(#received_packet{packet_type = message, raw_packet = Packet}, State)
     %% Here starts actual messages' long journey through all plugins
     process_message(Message, Config),
     {noreply, State};
-handle_info(#received_packet{packet_type = PacketType, raw_packet = Packet}, State) ->
+handle_info(#received_packet{packet_type = _PacketType, raw_packet = _Packet}, State) ->
     %% lager:debug("Resieved XMPP packet~ntype: ~p~npacket: ~p", [PacketType, Packet]),
     {noreply, State};
 handle_info(Msg, State) -> 
@@ -137,11 +133,6 @@ terminate(Reason, State) ->
     gen_server:cast(core, {terminated, self(), Reason}),
     ok.
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
-
-%% interface functions
-
-store_config(Item, Pid) ->
-    gen_server:call(Pid, {store_config, Item}).
 
 %% gen_server callbacks end
 
