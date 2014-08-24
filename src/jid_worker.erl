@@ -62,19 +62,30 @@ handle_call(Any, _From, State) ->
     lager:info("Recieved unknown call: ~p", [Any]),
     {noreply, State}.
 
-
 handle_cast(start_plugins, State) ->
     Config = State#state.config,
     PluginList = jid_config:plugins(Config),
-    lager:info("found plugins: ~p", [PluginList]),
-    lists:foreach(fun(Plugin) ->
-                          lager:info("starting plugin: ~p", [Plugin]),
-                          %% Hook point #1
-                          Plugin:start(State#state.supervisor,
-                                       Config,
-                                       self())
-                  end,
-                  PluginList),
+    case PluginList of
+        [] ->
+            lager:info("No plugins found");
+        NonEmptyList when is_list(NonEmptyList) ->
+            lager:info("found plugins: ~p", [PluginList]),
+            %% Hook point #1
+            lager:debug("Plugin list:"),
+            lists:foreach(fun(E) ->
+                                  lager:debug("~p", [E])
+                          end,
+                          PluginList),
+            lager:debug("statring plugin supervior"),
+            supervisor:start_child(State#state.supervisor,
+                                   {list_to_atom(jid_config:jid(Config) ++ "_plugin_supervisor"),
+                                    {plugin_supervisor, start_link, [{Plugin, Config, self()} || Plugin <- PluginList]},
+                                    temporary,
+                                    brutal_kill,
+                                    supervisor,
+                                    [plugin_supervisor]});
+        _ -> lager:error("PluginList has strange value: ~p", [PluginList])
+    end,
     gen_server:cast(core, {started_plugins, self(), State#state.name}),
     {noreply, State};
 handle_cast(join_rooms, State) ->

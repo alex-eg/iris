@@ -86,12 +86,12 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 %% gen_server callbacks end
 
 start_worker(Config, Supervisor) ->
-    Name = list_to_atom(jid_config:jid(Config) ++ "_supervisor"),
-    lager:info("Starting jid_supervisor for ~p with supervisor ~p", [Name, Supervisor]),
+    Name = list_to_atom(jid_config:jid(Config)),
+    lager:info("Starting jid_worker for ~p with supervisor ~p", [Name, Supervisor]),
     {ok, _Pid} = supervisor:start_child(Supervisor,
                                         {Name,
-                                         {jid_supervisor, start_link, [Config, Name]},
+                                         {jid_worker, start_link, [Config, Name, Supervisor]},
                                          transient,
-                                         infinity,
-                                         supervisor,
-                                         [jid_supervisor]}).
+                                         brutal_kill,
+                                         worker,
+                                         [jid_worker]}).
