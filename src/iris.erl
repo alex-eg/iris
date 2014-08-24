@@ -41,7 +41,7 @@ start(normal, _StartArgs) ->
     lager:info("|                                                 |"),
     lager:info("#-------------=======================-------------#"),
 
-    supervisor:start_link({local, main_sup}, ?MODULE, []).
+    supervisor:start_link({local, iris_main_sup}, ?MODULE, []).
 
 stop(_State) ->
     exit(main_sup, shutdown),
