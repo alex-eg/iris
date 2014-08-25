@@ -72,10 +72,10 @@ handle_cast(start_plugins, State) ->
                                   lager:debug("~p", [E])
                           end,
                           PluginList),
-            lager:debug("statring plugin supervior"),
-            supervisor:start_child(State#state.supervisor,
+            lager:debug("statring plugin supervisor"),
+            {ok, _Pid} = supervisor:start_child(State#state.supervisor,
                                    {list_to_atom(jid_config:jid(Config) ++ "_plugin_supervisor"),
-                                    {plugin_supervisor, start_link, [{Plugin, Config, self()} || Plugin <- PluginList]},
+                                    {plugin_supervisor, start_link, [[{Plugin, Config, self()} || Plugin <- PluginList]]},
                                     temporary,
                                     brutal_kill,
                                     supervisor,

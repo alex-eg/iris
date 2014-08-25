@@ -3,11 +3,11 @@
 -export([init/1]).
 -export([start_link/1]).
 
-start_link([Plugins]) ->
-    {ok, _Pid} = supervisor:start_link(?MODULE, [Plugins]).
+start_link(Plugins) ->
+    {ok, _Pid} = supervisor:start_link(?MODULE, Plugins).
 
-init([Plugins]) ->
-    lager:debug("statring plugin supersior"),
+init(Plugins) ->
+    lager:info("plugin_supervisor started and has pid ~p", [self()]),
     {ok, {
        {one_for_one, 1, 10},
        [{Plugin,
