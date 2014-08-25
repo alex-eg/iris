@@ -4,7 +4,8 @@
 -export([start/3, process_message/2]).
 
 start(_Parent, _Config, _From) ->
-    okay.
+    lager:info("not gen_server, ignoring"),
+    ignore.
 
 process_message(Message, Config) ->
     Type = message:type(Message),
