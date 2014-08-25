@@ -2,7 +2,7 @@
 -behavior(gen_server).
 -behavior(iris_plugin).
 -export([start/3, process_message/2]).
--export([start_link/2, accept_loop/4]).
+-export([accept_loop/4]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
 -define(TCP_OPTIONS, [binary, {packet, 0}, {active, false}, {reuseaddr, true}]).
@@ -16,15 +16,6 @@
 
 start(Supervisor, WorkerConfig, From) ->
     lager:info("Starting with supervisor ~p", [Supervisor]),
-    {ok, _Pid} = supervisor:start_child(Supervisor,
-                                        {external_interface,
-                                         {?MODULE, start_link, [WorkerConfig, From]},
-                                         transient,
-                                         brutal_kill,
-                                         worker,
-                                         [?MODULE]}).
-
-start_link(WorkerConfig, From) ->
     Config = proplists:get_value(external_interface, jid_config:other_config(WorkerConfig)),
     Target = proplists:get_value(target_jid, Config),
     Port =  proplists:get_value(port, Config),
@@ -32,9 +23,10 @@ start_link(WorkerConfig, From) ->
                    port = Port,
                    target_jid = Target
                   },
-    gen_server:start_link(?MODULE, State, []).
+    {ok, _Pid} = gen_server:start_link(?MODULE, State, []).
 
 init(State) ->
+    lager:info("external_interface started and has pid ~p", [self()]),
     Port = State#state.port,
     {ok, LSocket} = gen_tcp:listen(Port, ?TCP_OPTIONS),
     NewState = State#state{socket = LSocket},
