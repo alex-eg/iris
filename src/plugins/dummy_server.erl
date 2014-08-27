@@ -28,8 +28,6 @@ init(State) ->
 handle_call(_Any, _From, State) ->
     {noreply, State}.
 
-handle_cast(wait_for_connection, State) ->
-    {noreply, State};
 handle_cast(_Any, State) ->
     {noreply, State}.
 
