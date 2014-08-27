@@ -1,24 +1,13 @@
 -module(dummy_server).
 -behavior(gen_server).
 -behavior(iris_plugin).
--export([start/3, process_message/2]).
--export([start_link/1]).
+-export([start/2, process_message/2]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
 -record(state,
         {parent_worker}).
 
-start(Supervisor, _WorkerConfig, From) ->
-    lager:info("Starting with supervisor ~p", [Supervisor]),
-    {ok, _Pid} = supervisor:start_child(Supervisor,
-                                        {dummy,
-                                         {?MODULE, start_link, [From]},
-                                         transient,
-                                         brutal_kill,
-                                         worker,
-                                         [?MODULE]}).
-
-start_link(From) ->
+start(_WorkerConfig, From) ->
     State = #state{parent_worker = From},
     {ok, _Pid} = gen_server:start_link(?MODULE, State, []).
 
