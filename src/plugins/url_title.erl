@@ -25,7 +25,7 @@ process_groupchat(Message, Config) ->
         _ -> ok
     end.
 
-process_text(Message, Config) ->
+process_text(Message, _Config) ->
     Match = re:run(message:body(Message), "((https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})(\/(?:[\/\w\.-]*)*\/?)?([\/?#][^ ]*))", [{capture, [1]}]),
     case Match of
         nomatch    -> ok;
@@ -84,5 +84,5 @@ extract_title({<<"html">>, _, [Head|_]}) ->
 extract_title({<<"head">>, _, HeadChildren}) ->
     lists:keyfind(<<"title">>, 1, HeadChildren);
 extract_title(SomethingElse) ->
-    "Mysterios occurence. Investigation required!",
-    lager:error("[~s] mochiveb parsed: ~t", [?MODULE, SomethingElse]).
+    lager:info("Mysterios occurence. Investigation required!"),
+    lager:info("mochiveb parsed: ~t", [SomethingElse]).
