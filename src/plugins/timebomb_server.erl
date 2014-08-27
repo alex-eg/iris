@@ -8,7 +8,7 @@
         {parent_worker}).
 
 start(_WorkerConfig, From) ->
-    lager:info("Starting. Parent process is", [From]),
+    lager:info("Starting. Parent process is ~p", [From]),
     State = #state{parent_worker = From},
     {ok, _Pid} = gen_server:start_link(?MODULE, State, []).
 
