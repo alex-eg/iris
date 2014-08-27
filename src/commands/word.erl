@@ -5,7 +5,7 @@
 run(["@word"], _) ->
     "What is the sound of one hand clapping?";
 run(["@word"|Args], _) ->
-    [{denshi_jisho, Config}] = gen_server:call(core, {get_config, denshi_jisho}),
+    [{denshi_jisho, Config}] = core:get_config(denshi_jisho),
     Base = proplists:get_value(request_url, Config),
     [Head|Tail] = Args,
     QueryURL = make_request_url(Head, Tail, Base),

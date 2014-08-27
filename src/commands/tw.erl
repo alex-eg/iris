@@ -6,7 +6,7 @@ run(["@tw"], _) ->
     "A hollow voice says, 'Fool'";
 run(["@tw"|ArgList], _) ->
     Tweet = string:join(ArgList, " "),
-    [{twitter_api, ApiConfig}] = gen_server:call(core, {get_config, twitter_api}),
+    [{twitter_api, ApiConfig}] = core:get_config(twitter_api),
     ConsumerKey = proplists:get_value(consumer_key, ApiConfig),
     ConsumerSecret = proplists:get_value(consumer_secret, ApiConfig),
     AccessToken = proplists:get_value(access_token, ApiConfig),

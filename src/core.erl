@@ -2,6 +2,7 @@
 -behavior(gen_server).
 -export([start_link/1]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
+-export([get_config/1]).
 -include("xmpp.hrl").
 
 -record(state,
@@ -83,7 +84,10 @@ terminate(Reason, State) ->
 
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
-%% gen_server callbacks end
+%% misc utils
+
+get_config(Key) ->
+    gen_server:call(core, {get_config, Key}).
 
 start_worker(Config, Supervisor) ->
     Name = list_to_atom(jid_config:jid(Config)),

@@ -6,7 +6,7 @@ run(["@g"], _) ->
     "Nothing to search";
 run(["@g"|ArgList], _) ->
     Args = string:join(ArgList, " "),
-    [{google_search, SearchConfig}] = gen_server:call(core, {get_config, google_search}),
+    [{google_search, SearchConfig}] = core:get_config(google_search),
 
     EscapedQuery = http_uri:encode(Args),
     Query = re:replace(EscapedQuery, "%20", "+", [global, unicode, {return, list}]),

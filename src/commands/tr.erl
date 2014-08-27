@@ -10,7 +10,7 @@ run(_, _) -> nope.
 
 translate(ArgList, Direction) ->
     What = string:join(ArgList, " "),
-    [{yandex_translate, TranslateConfig}] = gen_server:call(core, {get_config, yandex_translate}),
+    [{yandex_translate, TranslateConfig}] = core:get_config(yandex_translate),
     
     EscapedQuery = http_uri:encode(What),
     Query = re:replace(EscapedQuery, "%20", "+", [global, unicode, {return, list}]),
