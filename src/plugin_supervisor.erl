@@ -11,7 +11,7 @@ init(Plugins) ->
     {ok, {
        {one_for_one, 1, 10},
        [{Plugin,
-         {Plugin, start, [self(), Config, JidWorker]},
+         {Plugin, start, [Config, JidWorker]},
          transient,
          brutal_kill,
          worker,

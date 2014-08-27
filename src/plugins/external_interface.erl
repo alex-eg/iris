@@ -1,7 +1,7 @@
 -module(external_interface).
 -behavior(gen_server).
 -behavior(iris_plugin).
--export([start/3, process_message/2]).
+-export([start/2, process_message/2]).
 -export([accept_loop/4]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
@@ -14,8 +14,7 @@
          target_jid
         }).
 
-start(Supervisor, WorkerConfig, From) ->
-    lager:info("Starting with supervisor ~p", [Supervisor]),
+start(WorkerConfig, From) ->
     Config = proplists:get_value(external_interface, jid_config:other_config(WorkerConfig)),
     Target = proplists:get_value(target_jid, Config),
     Port =  proplists:get_value(port, Config),

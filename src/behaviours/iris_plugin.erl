@@ -1,6 +1,5 @@
 -module(iris_plugin).
--callback start(Parent :: pid(),   %% supervisor process pid
-                Config :: map(),   %% jid_config map (from data_structures dir)
+-callback start(Config :: map(),   %% jid_config map (from data_structures dir)
                 From :: pid()) ->  %% jid_worker pid
     term().
 

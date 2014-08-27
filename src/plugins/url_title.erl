@@ -1,9 +1,9 @@
 -module(url_title).
 -behaviour(iris_plugin).
 
--export([start/3, process_message/2]).
+-export([start/2, process_message/2]).
 
-start(_Parent, _Config, _From) ->
+start(_Config, _From) ->
     lager:info("not gen_server, ignoring"),
     ignore.
 
