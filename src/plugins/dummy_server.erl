@@ -1,4 +1,4 @@
--module(dummy).
+-module(dummy_server).
 -behavior(gen_server).
 -behavior(iris_plugin).
 -export([start/3, process_message/2]).
