@@ -91,11 +91,11 @@ get_config(Key) ->
 
 start_worker(Config, Supervisor) ->
     Name = list_to_atom(jid_config:jid(Config)),
-    lager:info("Starting jid_worker for ~p with supervisor ~p", [Name, Supervisor]),
+    lager:info("Starting jid_supervisor for ~p", [Name]),
     {ok, _Pid} = supervisor:start_child(Supervisor,
                                         {Name,
-                                         {jid_worker, start_link, [Config, Name, Supervisor]},
+                                         {jid_supervisor, start_link, [Config, Name]},
                                          transient,
-                                         brutal_kill,
-                                         worker,
-                                         [jid_worker]}).
+                                         infinity,
+                                         supervisor,
+                                         [jid_supervisor]}).

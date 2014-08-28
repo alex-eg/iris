@@ -76,8 +76,8 @@ handle_cast(start_plugins, State) ->
             {ok, _Pid} = supervisor:start_child(State#state.supervisor,
                                    {list_to_atom(jid_config:jid(Config) ++ "_plugin_supervisor"),
                                     {plugin_supervisor, start_link, [[{Plugin, Config, self()} || Plugin <- PluginList]]},
-                                    temporary,
-                                    brutal_kill,
+                                    transient,
+                                    infinity,
                                     supervisor,
                                     [plugin_supervisor]});
         _ -> lager:error("PluginList has strange value: ~p", [PluginList])
