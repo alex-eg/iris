@@ -5,9 +5,9 @@
 -include("xmpp.hrl").
 
 join_groupchat(Session, RoomConfig) ->
-    Room = room_config:jid(RoomConfig),
-    Nick = room_config:nick(RoomConfig),
-    Password = room_config:password(RoomConfig),
+    Room = config:get(jid, RoomConfig),
+    Nick = config:get(nick, RoomConfig),
+    Password = config:get(password, RoomConfig),
     lager:info("Joining ~s as ~s", [Room, Nick]),
     Presence = create_presence(Room, Nick, Password),
     exmpp_session:send_packet(Session, Presence).
@@ -17,7 +17,7 @@ send_muc_keepalive(Session, RoomTuple) ->
     Presence = create_presence(Room, Nick, Password),
     exmpp_session:send_packet(Session, Presence).
 
-create_presence(Room, Nick, nopassword) ->
+create_presence(Room, Nick, undefined) ->
     BasePresence = exmpp_xml:set_attribute(?EMPTY_PRESENCE,
                                            <<"to">>,
                                            list_to_binary(Room ++ "/" ++ Nick)),
