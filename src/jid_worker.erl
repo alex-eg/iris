@@ -14,7 +14,8 @@
         {name,
          supervisor,
          config,
-         session
+         session,
+         plugin_supervisor,
         }).
 
 start_link(Config, Name, Supervisor) ->
@@ -63,27 +64,30 @@ handle_cast(start_plugins, State) ->
     PluginList = jid_config:plugins(Config),
     case PluginList of
         [] ->
-            lager:info("No plugins found");
+            lager:info("No plugins found"),
+            PluginSupervisorPid = undefined;
         NonEmptyList when is_list(NonEmptyList) ->
-            lager:info("found plugins: ~p", [PluginList]),
+            lager:debug("statring plugin supervisor"),
+            {ok, PluginSupervisorPid} =
+                supervisor:start_child(State#state.supervisor,
+                                       {list_to_atom(jid_config:jid(Config) ++ "_plugin_supervisor"),
+                                        {plugin_supervisor, start_link, []},
+                                        transient,
+                                        infinity,
+                                        supervisor,
+                                        [plugin_supervisor]}),
             %% Hook point #1
             lager:debug("Plugin list:"),
             lists:foreach(fun(E) ->
-                                  lager:debug("~p", [E])
+                                  lager:debug("~p", [E]),
+                                  E:start(PluginSupervisorPid, Config, self())
                           end,
-                          PluginList),
-            lager:debug("statring plugin supervisor"),
-            {ok, _Pid} = supervisor:start_child(State#state.supervisor,
-                                   {list_to_atom(jid_config:jid(Config) ++ "_plugin_supervisor"),
-                                    {plugin_supervisor, start_link, [[{Plugin, Config, self()} || Plugin <- PluginList]]},
-                                    transient,
-                                    infinity,
-                                    supervisor,
-                                    [plugin_supervisor]});
-        _ -> lager:error("PluginList has strange value: ~p", [PluginList])
+                          PluginList);
+        _ -> lager:error("PluginList has strange value: ~p", [PluginList]),
+             PluginSupervisorPid = undefined
     end,
     gen_server:cast(core, {started_plugins, self(), State#state.name}),
-    {noreply, State};
+    {noreply, State#state{plugin_supervisor=PluginSupervisorPid}};
 handle_cast(join_rooms, State) ->
     Config = State#state.config,
     Session = State#state.session,
