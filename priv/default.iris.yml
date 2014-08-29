@@ -1,1 +1,16 @@
 iris:
+- denshi_jisho:
+- - request_url : "http://jisho.org/words?jap=~s&eng=~s&dict=edict"
+  
+- jids:
+- - somejid@someserver.do:
+- - - resource: whatever
+    - status: status text
+    - sasl_auth: DIGEST-MD5
+    - password: secret
+    - rooms:
+- - - - room1@server.do:
+      - nick: "Nick"
+      - commands: [last, exit]
+      - logging: on      
+          
