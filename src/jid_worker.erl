@@ -28,6 +28,7 @@ start_link(Config, Name, Supervisor) ->
                    config_ets = ConfigEts
                   },
     lists:foreach(fun(Entry) ->
+                          lager:debug("Inserting ~w in worker config ets", [Entry]),
                           ets:insert(ConfigEts, Entry)
                   end,
                   Config),
