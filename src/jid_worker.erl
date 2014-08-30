@@ -57,9 +57,12 @@ init(State) ->
                                 config:get(status, Config))
                              ),
     gen_server:cast(core, {connected, self(), State#state.name}),
-    {ok, State#state{session = Session,
-                     config_ets = ets:new(config, [bag])}}.
+    {ok, State#state{session = Session}}.
 
+handle_call({get_config, Key}, _From, State) ->
+    lager:debug("got get_config call"),
+    Reply = config:get(Key, State#state.config_ets),
+    {reply, Reply, State};
 handle_call(Any, _From, State) ->
     lager:info("Recieved unknown call: ~p", [Any]),
     {noreply, State}.
@@ -116,14 +119,6 @@ handle_cast({send_packet, Packet}, State) ->
 handle_cast(send_muc_keepalive, State) ->
     %% TODD: whitespace ping goes here
     {noreply, State};
-handle_cast({get_ets_config, Key}, State) ->
-    Ets = State#state.config_ets,
-    Config = ets:lookup(Ets, Key),
-    {reply, Config, State};
-handle_cast({store_ets_config, Term}, State) ->
-    Ets = State#state.config_ets,
-    ets:insert(Ets, Term),
-    {noreply, State};   
 handle_cast(Any, State) ->
     lager:info("Recieved unknown cast: '~p'", [Any]),
     {noreply, State}.
@@ -174,10 +169,10 @@ store_config(WorkerPid, Room, {Key, Value}) when is_pid(WorkerPid)
     gen_server:cast(WorkerPid, {store_config, {rooms, NewRooms}}).
 
 get_config(Key) when is_atom(Key) ->
-    gen_server:cast(core, {get_config, Key}).
+    gen_server:call(core, {get_config, Key}).
 
 get_config(WorkerPid, Key) ->
-    gen_server:cast(WorkerPid, {get_config, Key}).
+    gen_server:call(WorkerPid, {get_config, Key}).
 
 get_config(WorkerPid, Room, Key) ->
     Rooms = gen_server:cast(WorkerPid, {get_config, rooms}),
