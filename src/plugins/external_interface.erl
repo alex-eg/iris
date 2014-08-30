@@ -1,7 +1,8 @@
 -module(external_interface).
 -behavior(gen_server).
 -behavior(iris_plugin).
--export([start/2, process_message/2]).
+-export([start/3, process_message/2]).
+-export([start_link/2]).
 -export([accept_loop/4]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
@@ -14,22 +15,24 @@
          target_jid
         }).
 
-start(WorkerConfig, From) ->
-    Config = proplists:get_value(external_interface, jid_config:other_config(WorkerConfig)),
-    Target = proplists:get_value(target_jid, Config),
-    Port =  proplists:get_value(port, Config),
+start(Supervisor, WorkerConfig, From) ->
+    plugin_supervisor:start_plugin_process(Supervisor, ?MODULE, WorkerConfig, From).
+
+start_link(WorkerConfig, From) ->
+    Config = config:get(external_interface, WorkerConfig),
+    Port = config:get(port, Config),
+    Target = config:get(target_jid, Config),
     State = #state{parent_worker = From,
                    port = Port,
-                   target_jid = Target
-                  },
+                   target_jid = Target},
     {ok, _Pid} = gen_server:start_link(?MODULE, State, []).
 
 init(State) ->
     lager:info("external_interface started and has pid ~p", [self()]),
     Port = State#state.port,
     {ok, LSocket} = gen_tcp:listen(Port, ?TCP_OPTIONS),
-    NewState = State#state{socket = LSocket},
     gen_server:cast(self(), wait_for_connection),
+    NewState = State#state{socket = LSocket},
     {ok, NewState}.
 
 handle_call(_Any, _From, State) ->
