@@ -31,7 +31,7 @@ init(State) ->
                      worker_ets = WorkerEts}}.
 
 handle_call({get_config, Key}, _From, State) ->
-    Reply = ets:lookup(State#state.config_ets, Key),
+    Reply = config:get(Key, State#state.config_ets),
     {reply, Reply, State};
 handle_call(Any, _Caller, State) -> 
     lager:info("Recieved unknown request: ~p", [Any]),
@@ -57,10 +57,14 @@ handle_cast(start_workers, State) ->
     Supervisor = State#state.supervisor,
     Config = State#state.config_ets,
     [{jids, JidConfigList}] = ets:lookup(Config, jids),
-    lists:foreach(fun({Jid, JidConfig}) ->
-                          start_worker([{jid, Jid} | JidConfig], Supervisor)
-                  end,
-                  JidConfigList),
+    lists:foreach(
+      fun({Jid, RawJidConfig}) ->
+              RawRooms = proplists:get_value(rooms, RawJidConfig),
+              Rooms = [[{jid, Jid} | RestConfig] || {Jid, RestConfig} <- RawRooms],
+              JidConfig = [{rooms, Rooms} | [{K,V} || {K, V} <- RawJidConfig, K =/= rooms]],
+              start_worker([{jid, Jid} | JidConfig], Supervisor)
+      end,
+      JidConfigList),
     {noreply, State};
 handle_cast({store_config, {Key, Value}}, State) ->
     ets:insert(State#state.config_ets, {Key, Value}),
