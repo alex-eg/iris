@@ -9,7 +9,7 @@ get(Key, Ets) ->
     lager:debug("Looking up ~w in ets #~w", [Key, Ets]),
     case ets:lookup(Ets, Key) of
         [] ->
-            [];
+            undefined;
         [{Key, Value}|_] ->
             Value
     end.
