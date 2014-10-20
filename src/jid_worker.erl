@@ -21,15 +21,17 @@
          config_ets
         }).
 
+-define(CONFIG_ETS_NAME, config).
+
 start_link(Config, Name, Supervisor) ->
-    ConfigEts = ets:new(config, [bag]),
+    ConfigEts = ets:new(config, [named_table, bag]),
     State = #state{name = Name,
                    supervisor = Supervisor,
                    config_ets = ConfigEts
                   },
     lists:foreach(fun(Entry) ->
                           lager:debug("Inserting ~w in worker config ets", [Entry]),
-                          ets:insert(ConfigEts, Entry)
+                          ets:insert(?CONFIG_ETS_NAME, Entry)
                   end,
                   Config),
     {ok, _Pid} = gen_server:start_link(?MODULE, State, []).
