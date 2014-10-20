@@ -8,12 +8,11 @@ start_link() ->
     {ok, _Pid} = supervisor:start_link(?MODULE, []).
 
 init([]) ->
-    lager:info("plugin_supervisor started and has pid ~p", [self()]),
+    lager:info("started and has pid ~p", [self()]),
     {ok, {
        {one_for_one, 1, 10},
        []
       }}.
-
 
 start_plugin_process(Supervisor, Plugin, Config, Worker) ->
     {ok, _Pid} = supervisor:start_child(Supervisor,
