@@ -9,7 +9,7 @@ start_link(Config, WorkerName) ->
 init([Config, WorkerName]) ->
     lager:info("jid_supervisor started and has pid ~p", [self()]),
     {ok, {
-       {rest_for_one, 1, 10},
+       {one_for_one, 1, 10},
        [{WorkerName,
         {jid_worker, start_link, [Config, WorkerName, self()]},
         transient,
