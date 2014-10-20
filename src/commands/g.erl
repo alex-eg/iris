@@ -1,12 +1,13 @@
 -module(g).
 -export([run/2]).
 -behavior(iris_command).
+-alias("@g").
 
-run(["@g"], _) ->
+run([], _) ->
     "Nothing to search";
-run(["@g"|ArgList], _) ->
+run(ArgList, _) ->
     Args = string:join(ArgList, " "),
-    [{google_search, SearchConfig}] = core:get_config(google_search),
+    [{google_search, SearchConfig}] = jid_worker:get_config(google_search),
 
     EscapedQuery = http_uri:encode(Args),
     Query = re:replace(EscapedQuery, "%20", "+", [global, unicode, {return, list}]),
@@ -21,9 +22,7 @@ run(["@g"|ArgList], _) ->
     {Response} = jiffy:decode(list_to_binary(ResponseJSON)),
     Items = lists:keyfind(<<"items">>, 1, Response),
     Result = extract_result(Items),
-    Result;
-run(_, _) -> nope.
-
+    Result.
 
 extract_result({<<"items">>, ResultList}) ->
     [{FirstResult}|_] = ResultList,
