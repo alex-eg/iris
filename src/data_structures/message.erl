@@ -27,7 +27,7 @@ from(Message) ->
 from_room(Message) ->
     From = from(Message),
     [RoomJid|_] = string:tokens(From, "/"),
-    RoomJid.    
+    RoomJid.
 
 timestamp(Message) ->
     maps:get(timestamp, Message).
