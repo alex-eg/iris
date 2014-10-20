@@ -1,11 +1,38 @@
 -module(chat_commands).
 -behaviour(iris_plugin).
 
--export([start/2, process_message/2]).
+-export([start/3, process_message/2]).
 
-start(_Config, _From) ->
-    lager:info("not gen_server, ignoring"),
-    ignore.
+start(_Supervisor, WorkerConfig, From) ->
+    ChatCommands = config:get(commands, WorkerConfig),
+    Rooms = config:get(rooms, WorkerConfig),
+    RoomCommands = lists:foldl(fun(RoomConfig, Commands) ->
+                                       config:get(commands, RoomConfig) ++ Commands
+                               end,
+                               [],
+                               Rooms),
+    CommandList = ChatCommands ++ RoomCommands,
+    lager:debug("Command list:"),
+    lists:foreach(fun(C) ->
+                          lager:debug("~p", [C])
+                  end,
+                  CommandList),
+    Commands =
+        lists:filtermap(
+          fun(M) ->
+                  ModuleOk =
+                      module_exists(M) andalso
+                      module_exports_run(M) andalso
+                      module_has_alias(M),
+                  if ModuleOk ->
+                          Alias = proplists:get_value(alias, M:module_info(attributes)),
+                          {true, {Alias, M}};
+                     not ModuleOk ->
+                          false
+                  end
+          end,
+          CommandList),
+    jid_worker:store_config(From, {chat_commands, [{commands, Commands}]}).
 
 process_message(Message, Config) ->
     Type = message:type(Message),
@@ -21,18 +48,21 @@ process_message(Message, Config) ->
     end.
 
 process_chat(Message, Config) ->
-    CommandList = proplists:get_value(commands, jid_config:other_config(Config)),
-    lists:foreach(fun(Command) ->
-                          Response = Command:run(string:tokens(message:body(Message), " "),
-                                                 message:from(Message)),
-                          lager:debug("Command ~s returned ~p", [Command, Response]),
-                          case Response of
-                              nope -> ok;
-                              _ -> Jid = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
-                                   jid_worker:reply(Response, Jid)
-                          end
-                  end,
-                  CommandList).
+    Commands = config:get(commands, Config),
+    [Command|ArgList] = string:tokens(message:body(Message), " "),
+    lager:debug("Chat. Command: ~p, Module: ~p", [Command, config:get(Command, Commands)]),
+    case proplists:get_value(Command, Commands) of
+        undefined ->
+            ok;
+        Module ->
+              Response = Module:run(ArgList ,message:from(Message)),
+              lager:debug("Command ~s returned ~p", [Command, Response]),
+              case Response of
+                  nope -> ok;
+                  _ -> Jid = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
+                       jid_worker:reply(Response, Jid)
+              end
+    end.
 
 preprocess_groupchat(Message, Config) ->
     Stamp = exmpp_xml:get_element(message:raw(Message), delay), %% removing history messages
@@ -42,13 +72,10 @@ preprocess_groupchat(Message, Config) ->
     end.
 
 process_groupchat(Message, Config) ->
-    RoomConfList = jid_config:room_confs(Config),
     FromRoom = message:from_room(Message),
-    [RoomConfig] = lists:filter(fun(RoomConf) ->
-                                        room_config:jid(RoomConf) == FromRoom
-                                end,
-                                RoomConfList),
-    CommandList = room_config:commands(RoomConfig),
+    Commands = jid_worker:get_config(self(), FromRoom, commands),
+    [Command|ArgList] = string:tokens(message:body(Message), " "),
+    lager:debug("Groupchat. Command: ~p, Module: ~p", [Command, proplists:get_value(Command, Commands)]),
     lists:foreach(fun(Command) ->
                           Response = Command:run(string:tokens(message:body(Message), " "),
                                                  message:from(Message)),
@@ -61,4 +88,34 @@ process_groupchat(Message, Config) ->
                                    jid_worker:reply(NewMessage, RoomJid)
                           end
                   end,
-                  CommandList).
+                  Commands).
+
+module_exists(Module) when is_atom(Module) ->
+    try Module:module_info() of
+        _InfoList ->
+            true
+    catch
+        _:_ ->
+            lager:error("Module ~p does not exist", [Module]),
+            false
+    end.
+
+module_exports_run(Module) ->
+    ExportsRun = lists:member({run, 2}, Module:module_info(exports)),
+    if ExportsRun ->
+            true;
+       not ExportsRun ->
+            lager:error("Module ~p does not export run/2 function", [Module]),
+            false
+    end.
+
+module_has_alias(Module) ->
+    HasAlias = not lists:keyfind(alias, 1, Module:module_info(attributes)) == [],
+    if HasAlias ->
+            true;
+       not HasAlias ->
+            lager:error("Module ~p does not specify alias attribute", [Module]),
+            false
+    end.
+
+
