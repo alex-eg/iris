@@ -79,4 +79,4 @@ loop(Socket, Subscriber, Recepient) ->
     end.
 
 process_message(_Msg, _Cfg) ->
-    nope.
+    ok.
