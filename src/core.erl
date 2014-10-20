@@ -73,7 +73,7 @@ handle_cast(Any, State) ->
     lager:info("Recieved unknown cast: '~p'", [Any]),
     {noreply, State}.
 
-handle_info(_Msg, State) -> 
+handle_info(_Msg, State) ->
     lager:info("Recieved unknown message: ~p~n", [_Msg]),
     {noreply, State}.
 
