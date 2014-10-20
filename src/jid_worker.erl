@@ -62,7 +62,6 @@ init(State) ->
     {ok, State#state{session = Session}}.
 
 handle_call({get_config, Key}, _From, State) ->
-    lager:debug("got get_config call"),
     Reply = config:get(Key, State#state.config_ets),
     {reply, Reply, State};
 handle_call(Any, _From, State) ->
@@ -174,11 +173,22 @@ get_config(Key) when is_atom(Key) ->
     gen_server:call(core, {get_config, Key}).
 
 get_config(WorkerPid, Key) ->
-    gen_server:call(WorkerPid, {get_config, Key}).
+    if
+        WorkerPid == self() ->
+            config:get(Key, ?CONFIG_ETS_NAME);
+        WorkerPid /= self() ->
+            gen_server:call(WorkerPid, {get_config, Key})
+    end.
 
 get_config(WorkerPid, Room, Key) ->
-    Rooms = gen_server:cast(WorkerPid, {get_config, rooms}),
-    RoomConfig = lists:keyfind(Room, 1, Rooms),
+    if
+        WorkerPid == self() ->
+            Rooms = config:get(rooms, ?CONFIG_ETS_NAME);
+        WorkerPid /= self() ->
+            Rooms = gen_server:call(WorkerPid, {get_config, rooms})
+    end,
+    [RoomConfig] = [[{jid, RoomJid} | Rest] || [{jid, RoomJid} | Rest] <- Rooms, RoomJid == Room],
+    lager:debug("~nroom:~p~nrooms: ~p~nroom config: ~p", [Room, Rooms, RoomConfig]),
     config:get(Key, RoomConfig).
 
 process_message(Message, Config) ->
