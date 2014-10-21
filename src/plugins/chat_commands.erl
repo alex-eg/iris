@@ -55,7 +55,7 @@ process_chat(Message, Config) ->
         undefined ->
             ok;
         Module ->
-              Response = Module:run(ArgList ,message:from(Message)),
+              Response = Module:run(ArgList, message:from(Message)),
               lager:debug("Command ~s returned ~p", [Command, Response]),
               case Response of
                   nope -> ok;
@@ -72,10 +72,11 @@ preprocess_groupchat(Message, Config) ->
     end.
 
 process_groupchat(Message, Config) ->
+    message:out(Message),
     FromRoom = message:from_room(Message),
     Commands = jid_worker:get_config(self(), FromRoom, commands),
     [Command|ArgList] = string:tokens(message:body(Message), " "),
-    lager:debug("Groupchat. Command: ~p, Module: ~p", [Command, proplists:get_value(Command, Commands)]),
+    lager:debug("Groupchat.~nCommands: ~p~nCommand: ~p~nModule: ~p", [Commands, Command, proplists:get_value(Command, Commands)]),
     lists:foreach(fun(Command) ->
                           Response = Command:run(string:tokens(message:body(Message), " "),
                                                  message:from(Message)),
