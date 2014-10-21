@@ -7,8 +7,7 @@ run([], _) ->
     "Nothing to search";
 run(ArgList, _) ->
     Args = string:join(ArgList, " "),
-    [{google_search, SearchConfig}] = jid_worker:get_config(google_search),
-
+    SearchConfig = jid_worker:get_config(google_search),
     EscapedQuery = http_uri:encode(Args),
     Query = re:replace(EscapedQuery, "%20", "+", [global, unicode, {return, list}]),
     ApiKey = proplists:get_value(api_key, SearchConfig),
@@ -18,6 +17,7 @@ run(ArgList, _) ->
         ++ "&cx=" ++ EngineId
         ++ "&q=" ++ Query
         ++ "&num=1",    % We need only 1st result
+    lager:debug("Getting google result for query: ~n~p", [QueryURL]),
     {{_, 200, _}, _, ResponseJSON} = misc:httpc_request(get, {QueryURL, []}, [], []),
     {Response} = jiffy:decode(list_to_binary(ResponseJSON)),
     Items = lists:keyfind(<<"items">>, 1, Response),
