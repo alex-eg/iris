@@ -1,5 +1,7 @@
 -module(message).
--export([create/1, type/1, body/1, from/1, timestamp/1, raw/1, from_room/1]).
+-export([create/1,
+         type/1, body/1, from/1, timestamp/1, raw/1, from_room/1,
+         out/1]).
 
 create(RawMessage) ->
     Type = exmpp_message:get_type(RawMessage),
@@ -32,3 +34,11 @@ from_room(Message) ->
 timestamp(Message) ->
     maps:get(timestamp, Message).
     
+out(Message) ->
+    lager:debug("~nRaw:~p~nType:~p~nBody:~p~nFrom:~p~nFrom room:~p~nTimestamp:~p~n",
+                [raw(Message),
+                 type(Message),
+                 body(Message),
+                 from(Message),
+                 from_room(Message),
+                 timestamp(Message)]).
