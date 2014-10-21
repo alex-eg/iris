@@ -110,12 +110,12 @@ module_exports_run(Module) ->
     end.
 
 module_has_alias(Module) ->
-    HasAlias = not lists:keyfind(alias, 1, Module:module_info(attributes)) == [],
-    if HasAlias ->
-            true;
-       not HasAlias ->
+    HasAlias = lists:keyfind(alias, 1, Module:module_info(attributes)),
+    if HasAlias == false ->
             lager:error("Module ~p does not specify alias attribute", [Module]),
-            false
+            false;
+       true ->
+            true
     end.
 
 
