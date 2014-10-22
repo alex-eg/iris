@@ -88,8 +88,8 @@ handle_cast(start_plugins, State) ->
                                         supervisor,
                                         [plugin_supervisor]}),
             %% Hook point #1
-            lager:debug("Plugin list:"),
-            lists:foreach(fun(E) -> lager:debug("-- ~p", [E]) end, PluginList),
+            lager:info("Plugin list:"),
+            lists:foreach(fun(E) -> lager:info("-- ~p", [E]) end, PluginList),
             lists:foreach(fun(E) ->
                                   E:start(PluginSupervisorPid, Config, self())
                           end,
