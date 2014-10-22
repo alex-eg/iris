@@ -1,11 +1,12 @@
 -module(shrink).
 -export([run/2]).
 -behavior(iris_command).
+-alias("@shrink").
 
-run(["@shrink"], _) ->
+run([], _) ->
     "Nothing to shrink-shrink about!";
 
-run(["@shrink"|Args], _) ->
+run(Args, _) ->
     QueryURL = string:join(Args, " "),
     EncodedQueryURL = http_uri:encode(QueryURL),
     EncodedQueryURL,

@@ -1,12 +1,12 @@
 -module(url_title).
 -behaviour(iris_plugin).
 
--export([start/2, process_message/2]).
+-export([start/3, process_message/2]).
 
-start(_Config, _From) ->
-    lager:info("not gen_server, ignoring"),
-    ignore.
+start(_Supervisor, WorkerConfig, From) ->
+    ok.
 
+    
 process_message(Message, Config) ->
     Type = message:type(Message),
     case Type of 
@@ -21,7 +21,17 @@ process_message(Message, Config) ->
 process_groupchat(Message, Config) ->
     Stamp = exmpp_xml:get_element(message:raw(Message), delay), %% removing history messages
     case Stamp of
-        undefined -> process_text(Message, Config);
+        undefined -> 
+            FromRoom = message:from_room(Message),
+            BotName = jid_worker:get_config(self(), FromRoom, nick),
+            From = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
+            [RoomJid|NickResource] = string:tokens(misc:format_str("~s",[From]),"/"),
+            Nick = string:join(NickResource, "/"),
+            if Nick /= BotName ->
+                    process_text(Message, Config);
+                true ->
+                    ok
+            end;
         _ -> ok
     end.
 
