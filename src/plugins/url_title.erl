@@ -6,7 +6,6 @@
 start(_Supervisor, WorkerConfig, From) ->
     ok.
 
-    
 process_message(Message, Config) ->
     Type = message:type(Message),
     case Type of 
@@ -21,7 +20,7 @@ process_message(Message, Config) ->
 process_groupchat(Message, Config) ->
     Stamp = exmpp_xml:get_element(message:raw(Message), delay), %% removing history messages
     case Stamp of
-        undefined -> 
+        undefined ->
             FromRoom = message:from_room(Message),
             BotName = jid_worker:get_config(self(), FromRoom, nick),
             From = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
@@ -45,7 +44,6 @@ process_text(Message, _Config) ->
             Response = misc:httpc_request(head, {URL, []}, [], []),
             process_response(Message, Response, URL)
     end.
-
 
 process_response(Message, {{_, 200, _}, List, _}, URL) ->
     {"content-type", Type} = lists:keyfind("content-type", 1, List),
@@ -87,7 +85,7 @@ process_response2(Message, {{_, 200, _}, _, Page}) ->
             end;
 process_response2(_Message, _Other) ->
     ok.
-    
+
 extract_title({<<"html">>, _, [Head|_]}) ->
     {<<"head">>, _, HeadChildren} = Head,
     lists:keyfind(<<"title">>, 1, HeadChildren);
