@@ -122,6 +122,9 @@ handle_cast({send_packet, Packet}, State) ->
 handle_cast(send_muc_keepalive, State) ->
     %% TODD: whitespace ping goes here
     {noreply, State};
+handle_cast({store_config, {Key, Value}}, State) ->
+    ets:insert(State#state.config_ets, {Key, Value}),
+    {noreply, State};
 handle_cast(Any, State) ->
     lager:info("Recieved unknown cast: '~p'", [Any]),
     {noreply, State}.
