@@ -1,5 +1,7 @@
 -module(foo).
--export([run/1]).
+-export([run/2]).
+-behavior(iris_command).
+-alias("@foo").
 
-run(_Args) ->
+run([], _) ->
     "bar".
