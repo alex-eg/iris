@@ -162,17 +162,25 @@ store_config(WorkerPid, {Key, Value}) ->
 
 store_config(WorkerPid, Room, {Key, Value}) when is_pid(WorkerPid)
                                                     andalso is_list(Room) ->
-    lager:debug("inserting {~w, ~w} to ~w config", [Key, Value, Room]),
-    Rooms = gen_server:cast(WorkerPid, {get_config, rooms}),
-    RoomConfig = lists:keyfind(Room, 1, Rooms),
+    if
+        WorkerPid == self() ->
+            Rooms = config:get(rooms, ?CONFIG_ETS_NAME);
+        WorkerPid /= self() ->
+            Rooms = gen_server:call(WorkerPid, {get_config, rooms})
+    end,
+    [RoomConfig] = [Rest || [{jid, RoomJid} | Rest] <- Rooms, RoomJid == Room],
     NewRoomConfig =
         [{Key, Value} |
-         [{K, V} || {K, V} <- RoomConfig, K =/= Key]],
+         [{K, V} || {K, V} <- RoomConfig, K /= Key]],
     NewRooms =
-        [{Room, NewRoomConfig} |
-         [{R, C} || {R, C} <- Rooms, R =/= Room]],
-    lager:debug("new room config: ~w", [NewRooms]),
-    gen_server:cast(WorkerPid, {store_config, {rooms, NewRooms}}).
+        [[{jid, Room} | NewRoomConfig] |
+         [[{jid, RoomJid} | Rest] || [{jid, RoomJid} | Rest] <- Rooms, RoomJid /= Room]],
+    if
+        WorkerPid == self() ->
+            ets:insert(?CONFIG_ETS_NAME, {rooms, NewRooms});
+        WorkerPid /= self() ->
+            gen_server:cast(WorkerPid, {store_config, {rooms, NewRooms}})
+    end.
 
 get_config(Key) when is_atom(Key) ->
     gen_server:call(core, {get_config, Key}).
