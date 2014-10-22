@@ -29,6 +29,18 @@ start(_Supervisor, WorkerConfig, From) ->
                   ChatCommands),
     jid_worker:store_config(From, {commands, ChatCommands}).
 
+check_module(M) ->
+     ModuleOk =
+        module_exists(M) andalso
+        module_exports_run(M) andalso
+        module_has_alias(M),
+    if ModuleOk ->
+            Alias = proplists:get_value(alias, M:module_info(attributes)),
+            {true, {Alias, M}};
+       not ModuleOk ->
+            false
+    end.
+
 process_message(Message, Config) ->
     Type = message:type(Message),
     case Type of 
