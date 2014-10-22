@@ -4,7 +4,7 @@
 -export([start/3, process_message/2]).
 
 start(_Supervisor, WorkerConfig, From) ->
-    ChatCommands = config:get(commands, WorkerConfig),
+    ChatCommandNames = config:get(commands, WorkerConfig),
     Rooms = config:get(rooms, WorkerConfig),
     lists:foreach(fun(RoomConfig) ->
                           RoomJid = config:get(jid, RoomConfig),
@@ -16,23 +16,18 @@ start(_Supervisor, WorkerConfig, From) ->
                                         RoomCommands),
                           jid_worker:store_config(From, RoomJid, {commands, RoomCommands})
                   end,
-                  CommandList),
-    Commands =
+                  Rooms),
+    ChatCommands =
         lists:filtermap(
-          fun(M) ->
-                  ModuleOk =
-                      module_exists(M) andalso
-                      module_exports_run(M) andalso
-                      module_has_alias(M),
-                  if ModuleOk ->
-                          Alias = proplists:get_value(alias, M:module_info(attributes)),
-                          {true, {Alias, M}};
-                     not ModuleOk ->
-                          false
-                  end
-          end,
-          CommandList),
-    jid_worker:store_config(From, {chat_commands, [{commands, Commands}]}).
+          fun check_module/1,
+          ChatCommandNames),
+
+    lager:info("Command list:"),
+    lists:foreach(fun(C) ->
+                          lager:info("-- ~p", [C])
+                  end,
+                  ChatCommands),
+    jid_worker:store_config(From, {commands, ChatCommands}).
 
 process_message(Message, Config) ->
     Type = message:type(Message),
