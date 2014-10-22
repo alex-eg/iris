@@ -24,42 +24,44 @@
 -define(CONFIG_ETS_NAME, config).
 
 start_link(Config, Name, Supervisor) ->
-    ConfigEts = ets:new(config, [named_table, bag]),
-    State = #state{name = Name,
-                   supervisor = Supervisor,
-                   config_ets = ConfigEts
-                  },
+    {ok, _Pid} = gen_server:start_link(?MODULE, {Config, Name, Supervisor}, []).
+
+% gen_server callbacks
+
+init({Config, WorkerName, Supervisor}) ->
+    ConfigEts = ets:new(config, [named_table, set]),
+    lager:debug("initial config: ~p", [Config]),
     lists:foreach(fun(Entry) ->
                           lager:debug("Inserting ~w in worker config ets", [Entry]),
                           ets:insert(?CONFIG_ETS_NAME, Entry)
                   end,
                   Config),
-    {ok, _Pid} = gen_server:start_link(?MODULE, State, []).
 
-% gen_server callbacks
-
-init(State) ->
-    lager:info("Jid worker ~p started and has pid ~p", [State#state.name, self()]),
-    Config = State#state.config_ets,
+    lager:info("Jid worker ~p started and has pid ~p", [WorkerName, self()]),
     Session = exmpp_session:start({1, 0}), %% retardation needed to start SSL authorization (designates xmpp stream version)
-    [Name, Server] = string:tokens(config:get(jid, Config), "@"),
-    Jid = exmpp_jid:make(Name,
+    [Login, Server] = string:tokens(config:get(jid, ConfigEts), "@"),
+    Jid = exmpp_jid:make(Login,
                          Server,
-                         config:get(resource, Config)),
-    exmpp_session:auth_info(Session, Jid, config:get(password, Config)),
-    Response = exmpp_session:connect_TCP(Session, Server, config:get(port, Config)),
+                         config:get(resource, ConfigEts)),
+    exmpp_session:auth_info(Session, Jid, config:get(password, ConfigEts)),
+    Response = exmpp_session:connect_TCP(Session, Server, config:get(port, ConfigEts)),
     case Response of
         {ok, _StreamID, _Features} -> ok;
         _Else -> lager:debug("~p", [Response])
     end,
-    exmpp_session:login(Session, config:get(sasl_auth, Config)),
+    exmpp_session:login(Session, config:get(sasl_auth, ConfigEts)),
     exmpp_session:send_packet(Session,
                               exmpp_presence:set_status(
                                 exmpp_presence:available(),
-                                config:get(status, Config))
+                                config:get(status, ConfigEts))
                              ),
-    gen_server:cast(core, {connected, self(), State#state.name}),
-    {ok, State#state{session = Session}}.
+    gen_server:cast(core, {connected, self(), WorkerName}),
+    State = #state{name = WorkerName,
+                   supervisor = Supervisor,
+                   config_ets = ConfigEts,
+                   session = Session
+                  },
+    {ok, State}.
 
 handle_call({get_config, Key}, _From, State) ->
     Reply = config:get(Key, State#state.config_ets),
