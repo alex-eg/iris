@@ -6,15 +6,15 @@
 start(_Supervisor, WorkerConfig, From) ->
     ChatCommands = config:get(commands, WorkerConfig),
     Rooms = config:get(rooms, WorkerConfig),
-    RoomCommands = lists:foldl(fun(RoomConfig, Commands) ->
-                                       config:get(commands, RoomConfig) ++ Commands
-                               end,
-                               [],
-                               Rooms),
-    CommandList = ChatCommands ++ RoomCommands,
-    lager:debug("Command list:"),
-    lists:foreach(fun(C) ->
-                          lager:debug("~p", [C])
+    lists:foreach(fun(RoomConfig) ->
+                          RoomJid = config:get(jid, RoomConfig),
+                          RoomCommandNames = config:get(commands, RoomConfig),
+                          RoomCommands = lists:filtermap(fun check_module/1,
+                                                         RoomCommandNames),
+                          lager:info("~s command list:", [RoomJid]),
+                          lists:foreach(fun(C) -> lager:info("-- ~p", [C]) end,
+                                        RoomCommands),
+                          jid_worker:store_config(From, RoomJid, {commands, RoomCommands})
                   end,
                   CommandList),
     Commands =
