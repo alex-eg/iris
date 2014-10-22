@@ -1,12 +1,13 @@
 -module(tw).
 -export([run/2]).
 -behavior(iris_command).
+-alias("@tw").
 
-run(["@tw"], _) ->
+run([], _) ->
     "A hollow voice says, 'Fool'";
-run(["@tw"|ArgList], _) ->
+run(ArgList, _) ->
     Tweet = string:join(ArgList, " "),
-    [{twitter_api, ApiConfig}] = core:get_config(twitter_api),
+    ApiConfig = jid_worker:get_config(twitter_api),
     ConsumerKey = proplists:get_value(consumer_key, ApiConfig),
     ConsumerSecret = proplists:get_value(consumer_secret, ApiConfig),
     AccessToken = proplists:get_value(access_token, ApiConfig),

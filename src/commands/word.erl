@@ -1,19 +1,18 @@
 -module(word).
 -export([run/2]).
 -behaviour(iris_command).
+-alias("@word").
 
-run(["@word"], _) ->
+run([], _) ->
     "What is the sound of one hand clapping?";
-run(["@word"|Args], _) ->
-    [{denshi_jisho, Config}] = core:get_config(denshi_jisho),
-    Base = proplists:get_value(request_url, Config),
+run(Args, _) ->
+    [{request_url, Base}] = jid_worker:get_config(denshi_jisho),
     [Head|Tail] = Args,
     QueryURL = make_request_url(Head, Tail, Base),
     {{_, 200, _}, _, Response} = misc:httpc_request(get, {QueryURL, []}, [], []),
     %% Here be dragons
     Dom = mochiweb_html:parse(Response),
-    extract_info(Dom);
-run(_, _) -> nope.
+    extract_info(Dom).
 
 make_request_url("en", Tail, Base) ->
     Query = create_query(Tail),

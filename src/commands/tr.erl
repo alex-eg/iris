@@ -1,12 +1,12 @@
 -module(tr).
 -export([run/2]).
 -behavior(iris_command).
+-alias("@tr").
 
-run(["@tr"], _) ->
+run([], _) ->
     "No. It won't work";
-run(["@tr"|ArgList], _) ->
-    translate(ArgList, "ru");
-run(_, _) -> nope.
+run(ArgList, _) ->
+    translate(ArgList, "ru").
 
 translate(ArgList, Direction) ->
     What = string:join(ArgList, " "),
