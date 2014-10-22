@@ -1,11 +1,9 @@
 -module(greet).
 -export([run/2]).
 -behavior(iris_command).
+-alias("@greet").
 
-run(["@greet"], From) ->
+run(_, From) ->
     [_Room|NickList] = string:tokens(From, "/"),
     Nick = string:join(NickList, "/"),
-    "Hello, " ++ Nick;
-run(["@greet"|ArgList], _) ->
-    "Hello, " ++ string:join(ArgList, " ");
-run(_, _) -> nope.
+    "Hello, " ++ Nick.
