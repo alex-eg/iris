@@ -201,7 +201,6 @@ get_config(WorkerPid, Room, Key) ->
             Rooms = gen_server:call(WorkerPid, {get_config, rooms})
     end,
     [RoomConfig] = [[{jid, RoomJid} | Rest] || [{jid, RoomJid} | Rest] <- Rooms, RoomJid == Room],
-    lager:debug("~nroom:~p~nrooms: ~p~nroom config: ~p", [Room, Rooms, RoomConfig]),
     config:get(Key, RoomConfig).
 
 process_message(Message, Config) ->
