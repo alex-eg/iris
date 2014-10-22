@@ -32,7 +32,7 @@ init({Config, WorkerName, Supervisor}) ->
     ConfigEts = ets:new(config, [named_table, set]),
     lager:debug("initial config: ~p", [Config]),
     lists:foreach(fun(Entry) ->
-                          lager:debug("Inserting ~w in worker config ets", [Entry]),
+                          lager:debug("Inserting ~p in worker config ets", [Entry]),
                           ets:insert(?CONFIG_ETS_NAME, Entry)
                   end,
                   Config),
