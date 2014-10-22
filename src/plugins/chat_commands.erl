@@ -79,24 +79,25 @@ preprocess_groupchat(Message, Config) ->
     end.
 
 process_groupchat(Message, Config) ->
-    message:out(Message),
     FromRoom = message:from_room(Message),
     Commands = jid_worker:get_config(self(), FromRoom, commands),
-    [Command|ArgList] = string:tokens(message:body(Message), " "),
-    lager:debug("Groupchat.~nCommands: ~p~nCommand: ~p~nModule: ~p", [Commands, Command, proplists:get_value(Command, Commands)]),
-    lists:foreach(fun(Command) ->
-                          Response = Command:run(string:tokens(message:body(Message), " "),
-                                                 message:from(Message)),
-                          case Response of
-                              nope -> ok;
-                              _ -> From = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
-                                   [RoomJid|NickResource] = string:tokens(misc:format_str("~s",[From]),"/"),
-                                   Nick = string:join(NickResource, "/"), % In case nick/resource contains '/' characters
-                                   NewMessage = Nick ++ ", " ++ Response,
-                                   jid_worker:reply(NewMessage, RoomJid)
-                          end
-                  end,
-                  Commands).
+    [MaybeCommand|ArgList] = string:tokens(message:body(Message), " "),
+    MaybeCommandTuple = lists:keyfind(MaybeCommand, 1, Commands),
+    if MaybeCommandTuple /= false ->
+            {_Alias, Command} = MaybeCommandTuple,
+            Response = Command:run(ArgList,
+                                   message:from(Message)),
+            case Response of
+                nope -> ok;
+                _ -> From = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
+                     [RoomJid|NickResource] = string:tokens(misc:format_str("~s",[From]),"/"),
+                     Nick = string:join(NickResource, "/"), % In case nick/resource contains '/' characters
+                     NewMessage = Nick ++ ", " ++ Response,
+                     jid_worker:reply(NewMessage, RoomJid)
+            end;
+       MaybeCommandTuple == false ->
+            ok
+    end.
 
 module_exists(Module) when is_atom(Module) ->
     try Module:module_info() of
