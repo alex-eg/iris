@@ -146,9 +146,9 @@ handle_info(Msg, State) ->
 terminate(Reason, State) ->
     Session = State#state.session,
     exmpp_session:stop(Session),
-    lager:info("worker ~p with pid ~p terminated.~nReason: ~p",
-              [State#state.name, self(), Reason]),
-    gen_server:cast(core, {terminated, self(), Reason}),
+    %% lager:info("worker ~p with pid ~p terminated.~nReason: ~p",
+    %%           [State#state.name, self(), Reason]),
+    %% gen_server:cast(core, {terminated, self(), Reason}),
     ok.
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
