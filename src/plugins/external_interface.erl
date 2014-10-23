@@ -61,10 +61,17 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
 accept_loop(Parent, LSocket, Subscriber, Recepient) ->
     lager:debug("started successfully!", []),
-    {ok, Socket} = gen_tcp:accept(LSocket),
-    loop(Socket, Subscriber, Recepient),
-    gen_server:cast(Parent, wait_for_connection),
-    exit(self(), shutdown).
+    Result = gen_tcp:accept(LSocket),
+    case Result of
+        {ok, Socket} ->
+            loop(Socket, Subscriber, Recepient),
+            gen_server:cast(Parent, wait_for_connection),
+            exit(self(), shutdown);
+        {error, Reason} ->
+            lager:info("socket error, reason: ~p, restarting", [Reason]),
+            gen_server:cast(Parent, wait_for_connection),
+            exit(self(), shutdown)
+    end.
 
 loop(Socket, Subscriber, Recepient) ->
     case gen_tcp:recv(Socket, 0) of
