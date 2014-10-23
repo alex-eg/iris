@@ -89,11 +89,9 @@ process_groupchat(Message, Config) ->
                                    message:from(Message)),
             case Response of
                 nope -> ok;
-                _ -> From = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
-                     [RoomJid|NickResource] = string:tokens(misc:format_str("~s",[From]),"/"),
-                     Nick = string:join(NickResource, "/"), % In case nick/resource contains '/' characters
+                _ -> Nick = message:nick(Message),
                      NewMessage = Nick ++ ", " ++ Response,
-                     jid_worker:reply(NewMessage, RoomJid)
+                     jid_worker:reply(NewMessage, FromRoom)
             end;
        MaybeCommandTuple == false ->
             ok
