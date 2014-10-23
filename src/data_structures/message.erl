@@ -1,6 +1,6 @@
 -module(message).
 -export([create/1,
-         type/1, body/1, from/1, timestamp/1, raw/1, from_room/1,
+         type/1, body/1, from/1, timestamp/1, raw/1, from_room/1, nick/1,
          out/1]).
 
 create(RawMessage) ->
@@ -30,6 +30,16 @@ from_room(Message) ->
     From = from(Message),
     [RoomJid|_] = string:tokens(From, "/"),
     RoomJid.
+
+nick(Message) ->
+    case type(Message) of
+        chat ->
+            undefined;
+        groupchat ->
+            From = message:from(Message),
+            [RoomJid|NickResource] = string:tokens(misc:format_str("~s",[From]),"/"),
+            Nick = string:join(NickResource, "/") % In case nick/resource contains '/' characters
+    end.
 
 timestamp(Message) ->
     maps:get(timestamp, Message).
