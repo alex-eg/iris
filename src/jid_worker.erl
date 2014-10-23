@@ -73,20 +73,11 @@ handle_call(Any, _From, State) ->
 handle_cast(start_plugins, State) ->
     Config = State#state.config_ets,
     PluginList = config:get(plugins, Config),
+    {_, PluginSupervisorPid, _, _} = lists:keyfind([plugin_supervisor], 4, supervisor:which_children(State#state.supervisor)),
     case PluginList of
         [] ->
-            lager:info("No plugins found"),
-            PluginSupervisorPid = undefined;
+            lager:info("No plugins found");
         NonEmptyList when is_list(NonEmptyList) ->
-            lager:debug("statring plugin supervisor"),
-            {ok, PluginSupervisorPid} =
-                supervisor:start_child(State#state.supervisor,
-                                       {list_to_atom(config:get(jid, Config) ++ "_plugin_supervisor"),
-                                        {plugin_supervisor, start_link, []},
-                                        transient,
-                                        infinity,
-                                        supervisor,
-                                        [plugin_supervisor]}),
             %% Hook point #1
             lager:info("Plugin list:"),
             lists:foreach(fun(E) -> lager:info("-- ~p", [E]) end, PluginList),

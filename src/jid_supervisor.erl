@@ -15,5 +15,11 @@ init([Config, WorkerName]) ->
         transient,
         brutal_kill,
         worker,
-        [jid_worker]}]
+        [jid_worker]},
+        {list_to_atom(atom_to_list(WorkerName) ++ "_plugin_supervisor"),
+         {plugin_supervisor, start_link, []},
+         transient,
+         brutal_kill,
+         supervisor,
+         [plugin_supervisor]}]
       }}.
