@@ -23,9 +23,7 @@ process_groupchat(Message, Config) ->
         undefined ->
             FromRoom = message:from_room(Message),
             BotName = jid_worker:get_config(self(), FromRoom, nick),
-            From = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
-            [RoomJid|NickResource] = string:tokens(misc:format_str("~s",[From]),"/"),
-            Nick = string:join(NickResource, "/"),
+            Nick = message:nick(Message),
             if Nick /= BotName ->
                     process_text(Message, Config);
                 true ->
@@ -48,8 +46,6 @@ process_text(Message, _Config) ->
 process_response(Message, {{_, 200, _}, List, _}, URL) ->
     {"content-type", Type} = lists:keyfind("content-type", 1, List),
     lager:debug("[~s] type: ~p", [?MODULE, Type]),
-    From = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
-    [RoomJid|_] = string:tokens(misc:format_str("~s",[From]),"/"),
     Position = string:str(Type, "text/html"),
     if Position >= 1 ->
             Response = misc:httpc_request(get, {URL, []}, [], []),
@@ -57,6 +53,7 @@ process_response(Message, {{_, 200, _}, List, _}, URL) ->
         true ->
             ImageFormats = ["image/png", "image/gif", "image/jpeg", "image/webp"],
             Exist = lists:member(Type, ImageFormats),
+            RoomJid = message:from_room(Message),
             case Type of
                 _ when Exist == true ->
                     {"content-length", LengthStr} = lists:keyfind("content-length", 1, List),
