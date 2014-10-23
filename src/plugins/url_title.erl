@@ -83,8 +83,9 @@ process_response2(Message, {{_, 200, _}, _, Page}) ->
 process_response2(_Message, _Other) ->
     ok.
 
-extract_title({<<"html">>, _, [Head|_]}) ->
-    {<<"head">>, _, HeadChildren} = Head,
+extract_title({<<"html">>, C, [{comment, _}|T]}) ->
+    extract_title({<<"html">>, C, T});
+extract_title({<<"html">>, _, [{<<"head">>, _, HeadChildren}|_]}) ->
     lists:keyfind(<<"title">>, 1, HeadChildren);
 extract_title({<<"head">>, _, HeadChildren}) ->
     lists:keyfind(<<"title">>, 1, HeadChildren);
