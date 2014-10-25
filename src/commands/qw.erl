@@ -1,14 +1,15 @@
 -module(qw).
 -export([run/2]).
+-alias("@qw").
 -behavior(iris_command).
 
-run(["@qw"], From) ->
+run([], From) ->
     qw_last_message(1, From);
-run(["@qw", "1"], From) ->
+run(["1"], From) ->
     qw_last_message(1, From);
-run(["@qw", "2"], From) ->
+run(["2"], From) ->
     qw_last_message(2, From);
-run(["@qw", "3"], From) ->
+run(["3"], From) ->
     qw_last_message(3, From);
 run(String, _) ->
     qw(String).
