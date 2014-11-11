@@ -28,7 +28,7 @@ qw(String) ->
     Ru = unicode:characters_to_list(<<"йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,"/utf8>>),
     [H|_] = UnicodeString,
     InEnglish = lists:member(H, En), %% if true, performing English to Russian conversion
-    qw(UnicodeString, InEnglish, En, Ru, "").
+    erlang:binary_to_list(unicode:characters_to_binary(qw(UnicodeString, InEnglish, En, Ru, ""))).
 
 qw("", _, _, _, Acc) ->
     lists:reverse(Acc);
