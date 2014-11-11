@@ -1,7 +1,9 @@
 -module(erronious_module).
--export([run/1]).
+-behavior(iris_command).
+-export([run/2]).
+-alias("@suicide").
 
-run(_ArgumentString) ->
+run(_, _) ->
     lager:info("Commiting suicide!"),
-    1 / 0,
+    exit(badarith),
     ok.
