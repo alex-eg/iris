@@ -28,10 +28,9 @@ qw("") ->
     "";
 qw(String) ->
     UnicodeString = unicode:characters_to_list(list_to_binary(String)),
-    En = "qwertyuiop[]asdfghjkl;'zxcvbnm,.QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?",
-    Ru = unicode:characters_to_list(<<"йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,"/utf8>>),
-    [H|_] = UnicodeString,
-    InEnglish = lists:member(H, En), %% if true, performing English to Russian conversion
+    En = "qwertyuiop[]asdfghjkl;'zxcvbnm,.QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?/",
+    Ru = unicode:characters_to_list(<<"йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,."/utf8>>),
+    InEnglish = check_language(UnicodeString, En), %% if true, performing English to Russian conversion
     erlang:binary_to_list(unicode:characters_to_binary(qw(UnicodeString, InEnglish, En, Ru, ""))).
 
 qw("", _, _, _, Acc) ->
@@ -52,6 +51,17 @@ qw([First|Second], false, En, Ru, Acc) ->
         not_found ->
             qw(Second, false, En, Ru, [First|Acc])
     end.
+
+check_language(UnicodeString, En) ->
+    EnCount = lists:foldl(fun(C, Num) ->
+                                  case lists:member(C, En) of
+                                      true -> Num + 1;
+                                      false -> Num
+                                  end
+                          end,
+                          0,
+                          UnicodeString),
+    EnCount > length(UnicodeString) div 2.
 
 index_of(Item, List) -> index_of(Item, List, 1).
 
