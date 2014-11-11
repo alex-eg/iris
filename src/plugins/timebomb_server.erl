@@ -1,23 +1,20 @@
 -module(timebomb_server).
 -behavior(gen_server).
 -behavior(iris_plugin).
--export([start/2, process_message/2]).
+-export([start/3, start_link/2, process_message/2]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
--record(state,
-        {parent_worker}).
+start(Supervisor, _WorkerConfig, From) ->
+    plugin_supervisor:start_plugin_process(Supervisor, ?MODULE, [], From).
 
-start(_WorkerConfig, From) ->
-    lager:info("Starting. Parent process is ~p", [From]),
-    State = #state{parent_worker = From},
-    {ok, _Pid} = gen_server:start_link(?MODULE, State, []).
+start_link(_WorkerConfig, _From) ->
+    Timeout = config:get(timeout, jid_worker:get_config(timebomb_server)),
+    {ok, _Pid} = gen_server:start_link(?MODULE, Timeout, []).
 
-init(State) ->
-    [{timebomb_server, TBConf}] = core:get_config(timebomb_server),
-    Timeout = proplists:get_value(timeout, TBConf),
+init(Timeout) ->
     lager:debug("Timeout is ~p", [Timeout]),
     timer:send_after(Timeout, exit),
-    {ok, State}.
+    {ok, []}.
 
 handle_call(_Any, _From, State) ->
     {noreply, State}.
@@ -30,8 +27,7 @@ handle_info(exit, _State) ->
 handle_info(_Msg, State) ->
     {noreply, State}.
 
-terminate(Reason, _State) ->
-    lager:info("Dummy server terminated. Reason: ~p", [Reason]),
+terminate(_Reason, _State) ->
     ok.
 
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
