@@ -65,23 +65,13 @@ process_chat(Message, Config) ->
         undefined ->
             ok;
         Module ->
-              Response = Module:run(ArgList, message:from(Message)),
-              lager:debug("Command ~s returned ~p", [Command, Response]),
-              case Response of
-                  nope -> ok;
-                  _ -> Jid = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
-                       jid_worker:reply(Response, Jid)
-              end
+            Response = Module:run(ArgList, message:from(Message)),
+            lager:debug("Command ~s returned ~p", [Command, Response]),
+            Jid = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
+            jid_worker:reply(Response, Jid)
     end.
 
-preprocess_groupchat(Message, Config) ->
-    Stamp = exmpp_xml:get_element(message:raw(Message), delay), %% removing history messages
-    case Stamp of
-        undefined -> process_groupchat(Message, Config);
-        _ -> ok
-    end.
-
-process_groupchat(Message, Config) ->
+process_groupchat(Message, _Config) ->
     FromRoom = message:from_room(Message),
     Commands = jid_worker:get_config(self(), FromRoom, commands),
     [MaybeCommand|ArgList] = string:tokens(message:body(Message), " "),
