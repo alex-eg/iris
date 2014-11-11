@@ -134,7 +134,7 @@ handle_info(Msg, State) ->
     lager:info("Recieved unknown message: '~p'", [Msg]),
     {noreply, State}.
 
-terminate(Reason, State) ->
+terminate(_Reason, State) ->
     Session = State#state.session,
     exmpp_session:stop(Session),
     %% lager:info("worker ~p with pid ~p terminated.~nReason: ~p",

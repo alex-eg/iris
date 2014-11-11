@@ -3,7 +3,7 @@
 
 -export([start/3, process_message/2]).
 
-start(_Supervisor, WorkerConfig, From) ->
+start(_Supervisor, _WorkerConfig, _From) ->
     ok.
 
 process_message(Message, Config) ->
