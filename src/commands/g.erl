@@ -21,8 +21,7 @@ run(ArgList, _) ->
     {{_, 200, _}, _, ResponseJSON} = misc:httpc_request(get, {QueryURL, []}, [], []),
     {Response} = jiffy:decode(list_to_binary(ResponseJSON)),
     Items = lists:keyfind(<<"items">>, 1, Response),
-    Result = extract_result(Items),
-    Result.
+    extract_result(Items).
 
 extract_result({<<"items">>, ResultList}) ->
     [{FirstResult}|_] = ResultList,
@@ -36,9 +35,8 @@ extract_result({<<"items">>, ResultList}) ->
     Title = proplists:get_value(title, ResultProplist),
     Snippet = proplists:get_value(snippet, ResultProplist),
     Link = proplists:get_value(link, ResultProplist),
-    Result = binary_to_list(Title) ++ "\n" ++
+    binary_to_list(Title) ++ "\n" ++
         binary_to_list(Snippet) ++ "\n" ++
-        binary_to_list(Link),
-    Result;
+        binary_to_list(Link);
 extract_result(false) ->
     "Sorry, nothing found".
