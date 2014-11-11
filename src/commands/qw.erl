@@ -12,6 +12,10 @@ run(["2"], From) ->
     qw_last_message(2, From);
 run(["3"], From) ->
     qw_last_message(3, From);
+run(["4"], From) ->
+    qw_last_message(4, From);
+run(["5"], From) ->
+    qw_last_message(5, From);
 run(StringList, _) ->
     qw(string:join(StringList, " ")).
 
