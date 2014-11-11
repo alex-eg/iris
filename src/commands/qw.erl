@@ -4,8 +4,9 @@
 -alias("@qw").
 -behavior(iris_command).
 
-run([], _) ->
-    qw_last_chat_message();
+run([], From) ->
+    [FromRoom|_] = string:tokens(From, "/"),
+    qw_last_chat_message(FromRoom);
 run(["1"], From) ->
     qw_last_message(1, From);
 run(["2"], From) ->
@@ -19,8 +20,8 @@ run(["5"], From) ->
 run(StringList, _) ->
     qw(string:join(StringList, " ")).
 
-qw_last_chat_message() ->
-    LastMessage = message_storage:get_last_message(),
+qw_last_chat_message(FromRoom) ->
+    LastMessage = message_storage:get_last_message(FromRoom),
     qw(LastMessage).
 
 qw_last_message(Num, From) ->

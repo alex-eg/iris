@@ -6,13 +6,12 @@
 -export([start_link/2]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 -export([get_message/2]).
--export([get_last_message/0]).
+-export([get_last_message/1]).
 
 -record(state,
         {parent_worker,
          message_limit,
-         ets,
-         last_message
+         ets
         }).
 
 start(Supervisor, WorkerConfig, From) ->
@@ -46,8 +45,14 @@ handle_call({get_message, MessageFrom, Num}, _From, State) ->
                                      lists:seq(1, Num))
     end,
     {reply, Reply, State};
-handle_call(get_last_message, _From, State) ->
-    Reply = State#state.last_message,
+handle_call({get_last_message, Room}, _From, State) ->
+    Ets = State#state.ets,
+    case config:get(Room, Ets) of
+        undefined ->
+            lager:warning("Last message is void for ~p", [Room]),
+            Reply = "undef";
+        Reply -> Reply
+    end,
     {reply, Reply, State};
 handle_call(_Any, _From, State) ->
     {noreply, State}.
@@ -64,7 +69,9 @@ handle_cast({store_message, From, Message}, State) ->
     end,
     {{value, _Item}, NewQueue} = queue:out(Queue),
     ets:insert(Ets, {From, queue:in(Message, NewQueue)}),
-    {noreply, State#state{last_message=Message}};
+    [FromRoom|_] = string:tokens(From, "/"),
+    ets:insert(Ets, {FromRoom, Message}),
+    {noreply, State};
 handle_cast(_Any, State) ->
     {noreply, State}.
 
@@ -107,6 +114,6 @@ get_message(From, Num) ->
     StorageServer = jid_worker:get_config(self(), message_storage_server),
     gen_server:call(StorageServer, {get_message, From, Num}).
 
-get_last_message() ->
+get_last_message(Room) ->
     StorageServer = jid_worker:get_config(self(), message_storage_server),
-    gen_server:call(StorageServer, get_last_message).
+    gen_server:call(StorageServer, {get_last_message, Room}).
