@@ -37,8 +37,8 @@ nick(Message) ->
             undefined;
         groupchat ->
             From = message:from(Message),
-            [RoomJid|NickResource] = string:tokens(misc:format_str("~s",[From]),"/"),
-            Nick = string:join(NickResource, "/") % In case nick/resource contains '/' characters
+            [_RoomJid|NickResource] = string:tokens(misc:format_str("~s",[From]),"/"),
+            string:join(NickResource, "/") % In case nick/resource contains '/' characters
     end.
 
 timestamp(Message) ->
