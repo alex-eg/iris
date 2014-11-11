@@ -83,9 +83,9 @@ process_message(Message, Config) ->
                 true -> ok
             end;
         error ->
-            lager:warning(?MODULE, "got XMPP error stanza: ~p", [message:raw(Message)]);
+            lager:warning("got XMPP error stanza: ~p", [message:raw(Message)]);
         _Other ->
-            lager:error(?MODULE, "got unknown message type: ~s", [Type])
+            lager:error("got unknown message type: ~p", [Type])
     end.
 
 process_chat(_Message, _Config) ->
