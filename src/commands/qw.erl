@@ -16,7 +16,7 @@ run(String, _) ->
     qw(String).
 
 qw_last_message(Num, From) ->
-    LastMessage = user_message_storage:get_message(From, Num),
+    LastMessage = message_storage:get_message(From, Num),
     lager:debug("Message storage returned ~p", [LastMessage]),
     qw(LastMessage).
 
