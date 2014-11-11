@@ -23,7 +23,4 @@ run(ArgList, _) ->
         {errors, Error} ->
             lager:error("Twitting failed with error: ~p", [Error]),
             "Something went wrong"
-    end;
-run(_, _) ->
-    nope.
-
+    end.

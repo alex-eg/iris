@@ -12,8 +12,7 @@ run(Args, _) ->
     EncodedQueryURL,
     {{_, 200, _}, _, ResponseJSON} = misc:httpc_request(post, {"http://api.xn--jj0a.jp/generate.json", [{"User-Agent", "iris/1.0"}],
                                                                "application/x-www-form-urlencoded", "fUrl=" ++ EncodedQueryURL ++ "&id="}, [], []),
-    parse(ResponseJSON);
-run(_, _) -> nope.
+    parse(ResponseJSON).
 
 parse(ResponseJSON) ->
     case jiffy:decode(list_to_binary(ResponseJSON)) of
