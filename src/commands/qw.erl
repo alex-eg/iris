@@ -12,8 +12,8 @@ run(["2"], From) ->
     qw_last_message(2, From);
 run(["3"], From) ->
     qw_last_message(3, From);
-run(String, _) ->
-    qw(String).
+run(StringList, _) ->
+    qw(string:join(StringList, " ")).
 
 qw_last_message(Num, From) ->
     LastMessage = message_storage:get_message(From, Num),
