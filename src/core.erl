@@ -60,7 +60,7 @@ handle_cast(start_workers, State) ->
     lists:foreach(
       fun({Jid, RawJidConfig}) ->
               RawRooms = proplists:get_value(rooms, RawJidConfig),
-              Rooms = [[{jid, Jid} | RestConfig] || {Jid, RestConfig} <- RawRooms],
+              Rooms = [[{jid, RJid} | RestConfig] || {RJid, RestConfig} <- RawRooms],
               JidConfig = [{rooms, Rooms} | [{K,V} || {K, V} <- RawJidConfig, K =/= rooms]],
               start_worker([{jid, Jid} | JidConfig], Supervisor)
       end,
