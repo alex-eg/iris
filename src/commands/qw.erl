@@ -1,3 +1,4 @@
+%% -*- coding: utf-8 -*-
 -module(qw).
 -export([run/2]).
 -alias("@qw").
@@ -15,7 +16,8 @@ run(String, _) ->
     qw(String).
 
 qw_last_message(Num, From) ->
-    LastMessage = jid_worker:get_message(From, Num),
+    LastMessage = user_message_storage:get_message(From, Num),
+    lager:debug("Message storage returned ~p", [LastMessage]),
     qw(LastMessage).
 
 qw("") ->
@@ -23,13 +25,10 @@ qw("") ->
 qw(String) ->
     UnicodeString = unicode:characters_to_list(list_to_binary(String)),
     En = "qwertyuiop[]asdfghjkl;'zxcvbnm,.QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?",
-    Ru = unicode:characters_to_list(<<"йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,">>),
+    Ru = unicode:characters_to_list(<<"йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,"/utf8>>),
     [H|_] = UnicodeString,
     InEnglish = lists:member(H, En), %% if true, performing English to Russian conversion
-    %% Suddenly! Lisp
-    binary_to_list(
-      unicode:characters_to_binary(
-        qw(UnicodeString, InEnglish, En, Ru, ""))).
+    qw(UnicodeString, InEnglish, En, Ru, "").
 
 qw("", _, _, _, Acc) ->
     lists:reverse(Acc);
