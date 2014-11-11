@@ -1,13 +1,13 @@
 -module(dummy_server).
 -behavior(gen_server).
 -behavior(iris_plugin).
--export([start/2, process_message/2]).
+-export([start/3, process_message/2]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
 -record(state,
         {parent_worker}).
 
-start(_WorkerConfig, From) ->
+start(_Supervisor, _WorkerConfig, From) ->
     State = #state{parent_worker = From},
     {ok, _Pid} = gen_server:start_link(?MODULE, State, []).
 
