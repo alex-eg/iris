@@ -1,7 +1,7 @@
 -module(message).
 -export([create/1,
          type/1, body/1, from/1, timestamp/1, raw/1, from_room/1, nick/1,
-         out/1]).
+         out/1, is_history/1]).
 
 create(RawMessage) ->
     Type = exmpp_message:get_type(RawMessage),
@@ -52,3 +52,10 @@ out(Message) ->
                  from(Message),
                  from_room(Message),
                  timestamp(Message)]).
+
+is_history(Message) ->
+    Stamp = exmpp_xml:get_element(message:raw(Message), delay), %% removing history messages
+    case Stamp of
+        undefined -> false;
+        _ -> true
+    end.

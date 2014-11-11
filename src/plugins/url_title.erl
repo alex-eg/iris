@@ -10,7 +10,10 @@ process_message(Message, Config) ->
     Type = message:type(Message),
     case Type of 
         groupchat ->
-            process_groupchat(Message, Config);
+            case message:is_history(Message) of
+                false -> process_groupchat(Message, Config);
+                true -> ok
+            end;
         error ->
             lager:warning("got XMPP error stanza: ~p", [message:raw(Message)]);
         _Other ->
@@ -18,18 +21,13 @@ process_message(Message, Config) ->
     end.
 
 process_groupchat(Message, Config) ->
-    Stamp = exmpp_xml:get_element(message:raw(Message), delay), %% removing history messages
-    case Stamp of
-        undefined ->
-            FromRoom = message:from_room(Message),
-            BotName = jid_worker:get_config(self(), FromRoom, nick),
-            Nick = message:nick(Message),
-            if Nick /= BotName ->
-                    process_text(Message, Config);
-                true ->
-                    ok
-            end;
-        _ -> ok
+    FromRoom = message:from_room(Message),
+    BotName = jid_worker:get_config(self(), FromRoom, nick),
+    Nick = message:nick(Message),
+    if Nick /= BotName ->
+            process_text(Message, Config);
+       true ->
+            ok
     end.
 
 process_text(Message, _Config) ->

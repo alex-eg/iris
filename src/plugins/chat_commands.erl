@@ -47,7 +47,10 @@ process_message(Message, Config) ->
         chat ->
             process_chat(Message, Config);
         groupchat ->
-            preprocess_groupchat(Message, Config);
+            case message:is_history(Message) of
+                false -> process_groupchat(Message, Config);
+                true -> ok
+            end;
         error ->
             lager:warning("got XMPP error stanza: ~p", [message:raw(Message)]);
         _Other ->
