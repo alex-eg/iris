@@ -10,8 +10,7 @@ run(ArgList, _) ->
 
 translate(ArgList, Direction) ->
     What = string:join(ArgList, " "),
-    [{yandex_translate, TranslateConfig}] = core:get_config(yandex_translate),
-    
+    TranslateConfig = jid_worker:get_config(yandex_translate),
     EscapedQuery = http_uri:encode(What),
     Query = re:replace(EscapedQuery, "%20", "+", [global, unicode, {return, list}]),
     ApiKey = proplists:get_value(api_key, TranslateConfig),
