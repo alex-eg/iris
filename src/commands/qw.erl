@@ -33,8 +33,8 @@ qw("") ->
     "";
 qw(String) ->
     UnicodeString = unicode:characters_to_list(list_to_binary(String)),
-    En = "qwertyuiop[]asdfghjkl;'zxcvbnm,.QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?/",
-    Ru = unicode:characters_to_list(<<"йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,."/utf8>>),
+    En = "~`qwertyuiop[]asdfghjkl;'zxcvbnm,.QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?/",
+    Ru = unicode:characters_to_list(<<"ЁёйцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,."/utf8>>),
     InEnglish = check_language(UnicodeString, En), %% if true, performing English to Russian conversion
     erlang:binary_to_list(unicode:characters_to_binary(qw(UnicodeString, InEnglish, En, Ru, ""))).
 
