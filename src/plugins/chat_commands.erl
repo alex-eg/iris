@@ -74,7 +74,12 @@ process_chat(Message, Config) ->
 process_groupchat(Message, _Config) ->
     FromRoom = message:from_room(Message),
     Commands = jid_worker:get_config(self(), FromRoom, commands),
-    [MaybeCommand|ArgList] = string:tokens(message:body(Message), " "),
+    case string:tokens(message:body(Message), " ") of
+        [MaybeCommand|ArgList] -> ok;
+        [] ->
+            MaybeCommand = [],
+            ArgList = []
+    end,
     MaybeCommandTuple = lists:keyfind(MaybeCommand, 1, Commands),
     if MaybeCommandTuple /= false ->
             {_Alias, Command} = MaybeCommandTuple,
