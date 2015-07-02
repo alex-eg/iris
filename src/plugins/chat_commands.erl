@@ -30,6 +30,7 @@ start(_Supervisor, WorkerConfig, From) ->
     jid_worker:store_config(From, {commands, ChatCommands}).
 
 check_module(M) ->
+%% Checking command module
      ModuleOk =
         module_exists(M) andalso
         module_exports_run(M) andalso
