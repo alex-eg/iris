@@ -1,7 +1,9 @@
 -module(word2).
--export([run/2]).
+%-export([run/2]).
 -behaviour(iris_command).
 -alias("@word2").
+
+-compile(export_all).
 
 run([], _) ->
     "What is the sound of one hand clapping?";
@@ -46,17 +48,33 @@ extract_info(Dom) ->
     %%                  X
     %%     end,
     %% lists:flatten(io_lib:format("~n~p", [lists:nth(1, lists:zip3(F(Furi), F(Text), F(MeaningTags)))])).
-    lists:nth(1, Furi).
+    Furi.
 
 get_furi({<<"span">>, [{<<"class">>,<<"furigana">>}], Contents}) ->
     lists:map(fun(C) ->
                       {<<"span">>, _, Text} = C,
                       case Text of
-                          [] -> "";
+                          [] -> "~s";
                           [Kana] -> binary_to_list(Kana)
                       end
               end,
               Contents).
+
+get_okuri({<<"span">>, [{<<"class">>,<<"text">>}], Contents}) ->
+    lists:foldr(fun(A, C) ->
+                      {<<"span">>, _, Text} = C,
+                      %% Good exapmle:
+                      %% <span class="text">
+                      %%     知<span>り</span>合<span>い</span>
+                      %% </span>
+                      case Text of
+                          {<<"span">>, [], [Okurigana]} ->  [{binary_to_list(Okurigana)}|A];
+			  _ -> A
+                      end
+		end,
+		[],
+		Contents).
+    
 
 get_kanji({<<"span">>, [{<<"class">>,<<"text">>}], Contents}) ->
     lists:map(fun(C) ->
