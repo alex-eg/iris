@@ -1,15 +1,17 @@
 NAME = iris
+REBAR = $(shell command -v rebar || echo "./rebar")
 
 all: clean compile
 
 clean:
-	rebar clean
+	$(REBAR) clean
 
 compile:
-	rebar compile
+	@echo $(REBAR)
+	$(REBAR) compile
 
 deps:
-	rebar get-deps
+	$(REBAR) get-deps
 
 modules: deps
 	erlc -I ./include -o ./ebin ./src/behaviours/*.erl
@@ -26,4 +28,4 @@ debug_sasl: all
 	cd ebin
 	erl -pa ebin deps/*/ebin -boot start_sasl -config priv/iris.config -s $(NAME)
 
-.PHONY: clean deps
+.PHONY: clean deps compile
