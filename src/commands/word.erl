@@ -12,7 +12,7 @@ run(Args, _) ->
     {{_, 200, _}, _, Response} = misc:httpc_request(get, {QueryURL, []}, [], []),
     Dom = mochiweb_html:parse(Response),
     %% 2 because why not
-    lists:flatten(lists:nth(2, extract_info(Dom))).
+    lists:flatten(lists:sublist(extract_info(Dom), 2)).
 
 make_request_url("en", Tail, Base) ->
     Query = create_query(Tail),
