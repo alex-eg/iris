@@ -37,8 +37,7 @@ create_query([H|T]) ->
 
 
 extract_info(Dom) ->
-    Furi        = lists:map(fun get_furi/1,
-                            mochiweb_xpath:execute("//div[@class='concept_light-representation']/span[@class='furigana']", Dom)),
+    Furi        = mochiweb_xpath:execute("//div[@class='concept_light-representation']/span[@class='furigana']", Dom),
     Text        = mochiweb_xpath:execute("//div[@class='concept_light-representation']/span[@class='text']", Dom),
     MeaningTags = mochiweb_xpath:execute("//div[@class='meanings-wrapper']", Dom),
     MaxLen = min(min(length(Furi),
@@ -48,7 +47,17 @@ extract_info(Dom) ->
     %%                  X
     %%     end,
     %% lists:flatten(io_lib:format("~n~p", [lists:nth(1, lists:zip3(F(Furi), F(Text), F(MeaningTags)))])).
-    Furi.
+    ReadingTemplate = lists:foldl(
+                        fun (S, A) ->
+                                A ++ io_lib:format("~s", [S])
+                        end,
+                        "",
+                        word2:get_furi(lists:nth(2, Furi))),
+    Okuri = get_okuri(lists:nth(2, Text)),
+
+    %%io_lib:format("~s [~s] ~s", [Spelling, Reading, Meanings]).
+    %%Furi.
+    io_lib:format(io_lib:format(ReadingTemplate), Okuri).
 
 get_furi({<<"span">>, [{<<"class">>,<<"furigana">>}], Contents}) ->
     lists:map(fun(C) ->
@@ -61,16 +70,15 @@ get_furi({<<"span">>, [{<<"class">>,<<"furigana">>}], Contents}) ->
               Contents).
 
 get_okuri({<<"span">>, [{<<"class">>,<<"text">>}], Contents}) ->
-    lists:foldr(fun(A, C) ->
-                      {<<"span">>, _, Text} = C,
-                      %% Good exapmle:
-                      %% <span class="text">
-                      %%     知<span>り</span>合<span>い</span>
-                      %% </span>
-                      case Text of
-                          {<<"span">>, [], [Okurigana]} ->  [{binary_to_list(Okurigana)}|A];
-			  _ -> A
-                      end
+    lists:foldr(fun(C, A) ->
+                        %% Good exapmle:
+                        %% <span class="text">
+                        %%     知<span>り</span>合<span>い</span>
+                        %% </span>
+                        case C of
+                            {<<"span">>, _, [Okuri]} -> [binary_to_list(Okuri)|A];
+                            _ -> A
+                        end
 		end,
 		[],
 		Contents).
