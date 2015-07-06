@@ -60,7 +60,7 @@ extract_info(Dom) ->
                                   {_, MeaningListText} = 
                                       lists:foldl(
                                         fun({tag, Tag}, {_, Acc}) ->
-                                                {1, Acc ++ io_lib:format("~n(~s): ", [Tag])};
+                                                {1, Acc ++ io_lib:format("(~s): ", [Tag])};
                                            ({meanings, MeaningEntry}, {EntryNum, Acc}) ->
                                                 {EntryNum + 1, Acc ++ io_lib:format("~w. ~s~n", [EntryNum, MeaningEntry])}
                                         end,
@@ -68,7 +68,7 @@ extract_info(Dom) ->
                                         Meanings),
                                   MeaningListText
                               end),
-              io_lib:format("~s [~s] ~s", [Spelling, Reading, MeaningText])
+              io_lib:format("~n~s [~s]~n~s", [Spelling, Reading, MeaningText])
       end,
       lists:zip3(lists:sublist(Text, MaxLen),
                  lists:sublist(Furi, MaxLen),
