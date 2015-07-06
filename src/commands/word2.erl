@@ -43,15 +43,67 @@ extract_info(Dom) ->
     MaxLen = min(min(length(Furi),
                      length(Text)),
                  length(MeaningTags)),
+    lists:map(
+      fun({TextE, FuriE, MeaningE}) ->
+              Spelling = lists:flatten(get_kanji(TextE)),
+              Reading = lists:flatten(reading(get_furi(FuriE),
+                                              (get_okuri(TextE)))),
+              Meanings = lists:takewhile(
+                           fun({tag, Tag}) ->
+                                   not(string:equal(Tag, "Wikipedia definition")
+                                       or string:equal(Tag, "Other forms") 
+                                       or string:equal(Tag, "Notes"));
+                              (_) -> true
+                           end,
+                           get_meanings(MeaningE)),
+              MeaningText = lists:flatten(
+                              begin
+                                  {_, MeaningListText} = 
+                                      lists:foldl(
+                                        fun({tag, Tag}, {_, Acc}) ->
+                                                {1, Acc ++ io_lib:format("~n(~s): ", [Tag])};
+                                           ({meanings, MeaningEntry}, {EntryNum, Acc}) ->
+                                                {EntryNum + 1, Acc ++ io_lib:format("~w. ~s~n", [EntryNum, MeaningEntry])}
+                                        end,
+                                        {1, ""},
+                                        Meanings),
+                                  MeaningListText
+                              end),
+              io_lib:format("~s [~s] ~s", [Spelling, Reading, MeaningText])
+      end,
+      lists:zip3(lists:sublist(Text, MaxLen),
+                 lists:sublist(Furi, MaxLen),
+                 lists:sublist(MeaningTags, MaxLen))).
+      
 
-    %% from here -- wrap into map
-    Okuri = get_okuri(lists:nth(3, Text)),
-
-    Spelling = lists:flatten(get_kanji(lists:nth(3, Text))),
-    Reading = lists:flatten(reading(get_furi(lists:nth(3, Furi)), Okuri)),
-    Meanings = " wololo, no meamings yet!",
-    io_lib:format("~s [~s] ~s", [Spelling, Reading, Meanings]).
-
+get_meanings({<<"div">>, [{<<"class">>,<<"meanings-wrapper">>}], Contents}) ->
+    lists:map(fun(C = {<<"div">>,
+                       [{<<"class">>,<<"meaning-wrapper">>}],
+                       _}) ->
+                      {meanings, collect_meanings(C)};
+                 ({<<"div">>,
+                   [{<<"class">>,<<"meaning-tags">>}],
+                   [Tag]}) ->
+                      {tag, convert(Tag)}
+              end,
+              Contents).
+                      
+collect_meanings(Contents) ->
+    Meanings = mochiweb_xpath:execute("//span[@class='meaning-meaning']", Contents),
+    lists:flatten(
+      lists:map(fun({<<"span">>,
+                     [{<<"class">>,<<"meaning-meaning">>}],
+                     Meaning}) ->
+                        lists:map(fun (M) ->
+                                          case M of
+                                              {<<"span">>, _, _} ->
+                                                  no;
+                                              MeaningText -> convert(MeaningText)
+                                          end
+                                  end,
+                                  Meaning)
+                end,
+                Meanings)).
 
 reading(Furi, Okuri) ->
     io_lib:format(lists:flatten(Furi), Okuri).
