@@ -16,7 +16,7 @@ run(Args, _) ->
 
 make_request_url("en", Tail, Base) ->
     Query = create_query(Tail),
-    io_lib:format(Base, ["", Query]);
+    io_lib:format(Base, [Query, ""]);
 make_request_url("ja", Tail, Base) ->
     Query = create_query(Tail),
     io_lib:format(Base, [Query, ""]);
