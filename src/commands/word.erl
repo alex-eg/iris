@@ -8,11 +8,11 @@ run([], _) ->
 run(Args, _) ->
     [{request_url, Base}] = jid_worker:get_config(denshi_jisho),
     [Head|Tail] = Args,
-    QueryURL = make_request_url(Head, Tail, Base),
+    QueryURL = make_request_url(Head, Tail, Base) ++ "%23words", % for #words, to tell jisho we are searching words
     {{_, 200, _}, _, Response} = misc:httpc_request(get, {QueryURL, []}, [], []),
-    %% Here be dragons
     Dom = mochiweb_html:parse(Response),
-    extract_info(Dom).
+    %% 2 because why not
+    lists:flatten(lists:nth(2, extract_info(Dom))).
 
 make_request_url("en", Tail, Base) ->
     Query = create_query(Tail),
@@ -35,163 +35,116 @@ create_query([H|T]) ->
     re:replace(EscapedQuery, "%20", "+", [global, unicode, {return, list}]).
 
 
-extract_info({<<"html">>, _, [_Head, Body|_Tail]}) ->
-    {<<"body">>, _, BodyTags} = Body,
-    FoundWords = proplists:get_value(comment, BodyTags),
-    extract_words(FoundWords, BodyTags);
-extract_info(_AnythingElse) ->
-    "Something mysterious happened!".
+extract_info(Dom) ->
+    Furi        = mochiweb_xpath:execute("//div[@class='concept_light-representation']/span[@class='furigana']", Dom),
+    Text        = mochiweb_xpath:execute("//div[@class='concept_light-representation']/span[@class='text']", Dom),
+    MeaningTags = mochiweb_xpath:execute("//div[@class='meanings-wrapper']", Dom),
+    MaxLen = min(min(length(Furi),
+                     length(Text)),
+                 length(MeaningTags)),
+    lists:map(
+      fun({TextE, FuriE, MeaningE}) ->
+              Spelling = lists:flatten(get_kanji(TextE)),
+              Reading = lists:flatten(reading(get_furi(FuriE),
+                                              (get_okuri(TextE)))),
+              Meanings = lists:takewhile(
+                           fun({tag, Tag}) ->
+                                   not(string:equal(Tag, "Wikipedia definition")
+                                       or string:equal(Tag, "Other forms") 
+                                       or string:equal(Tag, "Notes"));
+                              (_) -> true
+                           end,
+                           get_meanings(MeaningE)),
+              MeaningText = lists:flatten(
+                              begin
+                                  {_, MeaningListText} = 
+                                      lists:foldl(
+                                        fun({tag, Tag}, {_, Acc}) ->
+                                                {1, Acc ++ io_lib:format("~n(~s): ", [Tag])};
+                                           ({meanings, MeaningEntry}, {EntryNum, Acc}) ->
+                                                {EntryNum + 1, Acc ++ io_lib:format("~w. ~s~n", [EntryNum, MeaningEntry])}
+                                        end,
+                                        {1, ""},
+                                        Meanings),
+                                  MeaningListText
+                              end),
+              io_lib:format("~s [~s] ~s", [Spelling, Reading, MeaningText])
+      end,
+      lists:zip3(lists:sublist(Text, MaxLen),
+                 lists:sublist(Furi, MaxLen),
+                 lists:sublist(MeaningTags, MaxLen))).
+      
 
-
-extract_words(undefined, _) ->
-    "No comments in document, w00t!";
-extract_words(<<" Found no words ">>, _) ->
-    "Nothing found";
-extract_words(<<" Found words ">>, BodyTags) ->
-    KanjiTags = get_tag_list(<<"td">>,
-                             {<<"class">>, <<"kanji_column">>},
-                             BodyTags),
-    Kanji = extract_kanji(lists:reverse(KanjiTags)),
-    KanaTags = get_tag_list(<<"td">>,
-                            {<<"class">>, <<"kana_column">>},
-                            BodyTags),
-    Kana = extract_kana(lists:reverse(KanaTags)),
-    MeaningTags = get_tag_list(<<"td">>,
-                               {<<"class">>, <<"meanings_column">>},
-                               BodyTags),
-    Meaning = extract_meaning(lists:reverse(MeaningTags)),
-
-    SenseTags = get_tag_list(<<"span">>,
-                             {<<"class">>, <<"tags">>},
-                             BodyTags),
-    Sense = extract_tags(lists:reverse(SenseTags)),
-
-    KanaStringList = lists:map(fun binary_to_list/1, Kana),
-    KanjiStringList = lists:map(fun binary_to_list/1, Kanji),
-    MeaningStringList = lists:map(fun binary_to_list/1, Meaning),
-    SenseStringList = lists:map(fun binary_to_list/1, Sense),
-
-    Len = min(2, length(KanjiStringList)), % only first two results
-    {Start, _} = lists:split(Len,
-                             lists:zip(lists:zip(KanjiStringList, KanaStringList), 
-                                       lists:zip(MeaningStringList, SenseStringList))),
-    Result = lists:map(fun({{Kj, Kn}, {Mn, Tg}}) ->
-                               Kj1 = string:strip(Kj),
-                               Kj2 = string:strip(Kj1, right, $\t),
-
-                               Kn1 = string:strip(Kn),
-                               Kn2 = string:strip(Kn1, right, $\t),
-
-                               Mn1 = string:strip(Mn),
-                               Mn2 = string:strip(Mn1, right, $\t),
-                               Mn3 = re:replace(Mn2, "; *([1-9]:)", "\n\\1", [unicode, global, {return, list}]),
-
-                               Tg1 = string:strip(Tg),
-                               Tg2 = string:strip(Tg1, right, $\t),
-                               Tg3 = string:strip(Tg2, right, $\n),
-
-                               lists:flatten(io_lib:format("~n~s [~s]~n~s~n~s~n",[Kj2, Kn2, Mn3, Tg3]))
-                       end,
-                       Start),
-    string:strip(lists:flatten(Result), right, $\n).
-
--spec get_tag_list(binary(),
-                   {binary(), binary()},
-                   binary()) -> list().
-get_tag_list(Name, {Param, Value}, Tree) ->
-    collect_tags(Name, {Param, Value}, Tree, []).
-
-
--spec collect_tags(binary(), 
-                   {binary(), binary()},
-                   binary(),
-                   list()) -> list().
-collect_tags(_, _, [], Accum) ->
-    Accum;
-collect_tags(Name, {Param, Value}, [PCDATA|Tail], Accum) when is_binary(PCDATA) -> %% Skip raw text
-    collect_tags(Name, {Param, Value}, Tail, Accum);
-collect_tags(Name, {Param, Value}, [{comment, _}|Tail], Accum) -> %% Skip comments
-    collect_tags(Name, {Param, Value}, Tail, Accum);
-collect_tags(Name, {Param, Value}, Tree, Accum) ->
-    [H|T] = Tree,
-    {HeadName, HeadParams, HeadChildren} = H,
-    IsMember = lists:member({Param, Value}, HeadParams),
-    case HeadChildren of
-        [] ->
-            NewTree = T;
-
-        [_NotEmptyList|_] ->
-            NewTree = HeadChildren ++ T
-    end,
-
-    if HeadName == Name andalso
-       IsMember ->
-            collect_tags(Name, {Param, Value}, NewTree, [H|Accum]);
-       not (HeadName == Name) orelse
-       not IsMember ->
-            collect_tags(Name, {Param, Value}, NewTree, Accum)
-    end.
-
-extract_kanji(KanjiList) ->
-    lists:map(fun(Tag) ->
-                      {_,_,[Span]} = Tag,
-                      {_,_, Children} = Span,
-                      Kanji = lists:map(fun get_pcadata/1, Children),
-                      lists:foldr(fun(Elem, Acc) ->
-                                          <<Elem/binary, Acc/binary>>
-                                  end,
-                                  <<"">>,
-                                  Kanji)
+get_meanings({<<"div">>, [{<<"class">>,<<"meanings-wrapper">>}], Contents}) ->
+    lists:map(fun(C = {<<"div">>,
+                       [{<<"class">>,<<"meaning-wrapper">>}],
+                       _}) ->
+                      {meanings, collect_meanings(C)};
+                 ({<<"div">>,
+                   [{<<"class">>,<<"meaning-tags">>}],
+                   [Tag]}) ->
+                      {tag, convert(Tag)}
               end,
-              KanjiList).
-
-
-extract_kana(KanaList) ->
-    lists:map(fun(Tag) ->
-                      {_,_,Children} = Tag,
-                      Kana = lists:map(fun get_pcadata/1, Children),
-                      lists:foldr(fun(Elem, Acc) ->
-                                          <<Elem/binary, Acc/binary>>
+              Contents).
+                      
+collect_meanings(Contents) ->
+    Meanings = mochiweb_xpath:execute("//span[@class='meaning-meaning']", Contents),
+    lists:flatten(
+      lists:map(fun({<<"span">>,
+                     [{<<"class">>,<<"meaning-meaning">>}],
+                     Meaning}) ->
+                        lists:map(fun (M) ->
+                                          case M of
+                                              {<<"span">>, _, _} ->
+                                                  no;
+                                              MeaningText -> convert(MeaningText)
+                                          end
                                   end,
-                                  <<"">>,
-                                  Kana)
+                                  Meaning)
+                end,
+                Meanings)).
+
+reading(Furi, Okuri) ->
+    io_lib:format(lists:flatten(Furi), Okuri).
+
+get_furi({<<"span">>, [{<<"class">>,<<"furigana">>}], Contents}) ->
+    lists:map(fun(C) ->
+                      {<<"span">>, _, Text} = C,
+                      case Text of
+                          [] -> "~s";
+                          [Kana] -> convert(Kana)
+                      end
               end,
-              KanaList).
+              Contents).
 
-extract_meaning(MeaningList) ->
-    Meanings = lists:map( 
-                 fun(Tag) ->
-                         {_,_,Children} = Tag,
-                         Meanings = lists:map(fun get_pcadata/1, Children),
-                         lists:foldr(fun(Elem, Acc) ->
-                                             <<Elem/binary, Acc/binary>>
-                                     end,
-                                     <<"">>,
-                                     Meanings)
-                 end,
-                 MeaningList),
-    Meanings.    
+get_okuri({<<"span">>, [{<<"class">>,<<"text">>}], Contents}) ->
+    lists:foldr(fun(C, A) ->
+                        %% Good exapmle:
+                        %% <span class="text">
+                        %%     知<span>り</span>合<span>い</span>
+                        %% </span>
+                        case C of
+                            {<<"span">>, _, [Okuri]} -> [convert(Okuri)|A];
+                            _ -> A
+                        end
+		end,
+		[],
+		Contents).
+    
 
-extract_tags(TagList) ->
-    Tags = lists:map(
-             fun(Tag) ->
-                     {_, _, Children} = Tag,
-                     Tags = lists:map(fun get_pcadata/1, Children),
-                     lists:foldr(fun(Elem, Acc) ->
-                                         <<Elem/binary, Acc/binary>>
-                                 end,
-                                 <<"">>,
-                                 Tags)
-             end,
-             TagList),
-    Tags.
+get_kanji({<<"span">>, [{<<"class">>,<<"text">>}], Contents}) ->
+    lists:map(fun(Text) ->
+                      %% Good exapmle:
+                      %% <span class="text">
+                      %%     知<span>り</span>合<span>い</span>
+                      %% </span>
+                      case Text of
+                          {<<"span">>, [], [Okurigana]} -> convert(Okurigana);
+                          Kanji -> convert(Kanji)
+                      end
+              end,
+              Contents).
 
-
-get_pcadata(Tag) when is_binary(Tag) ->
-    Tag;
-get_pcadata([]) ->
-    <<"">>;
-get_pcadata({Tag, _Attributes, []}) when is_bitstring(Tag) ->
-    <<"">>;
-get_pcadata({Tag, _Attributes, [Child]}) when is_bitstring(Tag) ->
-    get_pcadata(Child).
+convert(BitString) ->
+    string:strip(string:strip(string:strip(binary_to_list(BitString)),
+                 both, $\n)).
