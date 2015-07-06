@@ -43,28 +43,25 @@ extract_info(Dom) ->
     MaxLen = min(min(length(Furi),
                      length(Text)),
                  length(MeaningTags)),
-    %% F = fun(List) -> {X, _} = lists:split(MaxLen, List),
-    %%                  X
-    %%     end,
-    %% lists:flatten(io_lib:format("~n~p", [lists:nth(1, lists:zip3(F(Furi), F(Text), F(MeaningTags)))])).
-    ReadingTemplate = lists:foldl(
-                        fun (S, A) ->
-                                A ++ io_lib:format("~s", [S])
-                        end,
-                        "",
-                        word2:get_furi(lists:nth(2, Furi))),
-    Okuri = get_okuri(lists:nth(2, Text)),
 
-    %%io_lib:format("~s [~s] ~s", [Spelling, Reading, Meanings]).
-    %%Furi.
-    io_lib:format(io_lib:format(ReadingTemplate), Okuri).
+    %% from here -- wrap into map
+    Okuri = get_okuri(lists:nth(3, Text)),
+
+    Spelling = lists:flatten(get_kanji(lists:nth(3, Text))),
+    Reading = lists:flatten(reading(get_furi(lists:nth(3, Furi)), Okuri)),
+    Meanings = " wololo, no meamings yet!",
+    io_lib:format("~s [~s] ~s", [Spelling, Reading, Meanings]).
+
+
+reading(Furi, Okuri) ->
+    io_lib:format(lists:flatten(Furi), Okuri).
 
 get_furi({<<"span">>, [{<<"class">>,<<"furigana">>}], Contents}) ->
     lists:map(fun(C) ->
                       {<<"span">>, _, Text} = C,
                       case Text of
                           [] -> "~s";
-                          [Kana] -> binary_to_list(Kana)
+                          [Kana] -> convert(Kana)
                       end
               end,
               Contents).
@@ -76,7 +73,7 @@ get_okuri({<<"span">>, [{<<"class">>,<<"text">>}], Contents}) ->
                         %%     知<span>り</span>合<span>い</span>
                         %% </span>
                         case C of
-                            {<<"span">>, _, [Okuri]} -> [binary_to_list(Okuri)|A];
+                            {<<"span">>, _, [Okuri]} -> [convert(Okuri)|A];
                             _ -> A
                         end
 		end,
@@ -85,16 +82,18 @@ get_okuri({<<"span">>, [{<<"class">>,<<"text">>}], Contents}) ->
     
 
 get_kanji({<<"span">>, [{<<"class">>,<<"text">>}], Contents}) ->
-    lists:map(fun(C) ->
-                      {<<"span">>, _, Text} = C,
+    lists:map(fun(Text) ->
                       %% Good exapmle:
                       %% <span class="text">
                       %%     知<span>り</span>合<span>い</span>
                       %% </span>
                       case Text of
-                          [] -> "";
-                          [Kanji] -> binary_to_list(Kanji);
-                          {<<"span">>, [], [Okurigana]} -> binary_to_list(Okurigana)
+                          {<<"span">>, [], [Okurigana]} -> convert(Okurigana);
+                          Kanji -> convert(Kanji)
                       end
               end,
               Contents).
+
+convert(BitString) ->
+    string:strip(string:strip(string:strip(binary_to_list(BitString)),
+                 both, $\n)).
