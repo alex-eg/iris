@@ -104,9 +104,35 @@ collect_meanings(Contents) ->
                 Meanings)).
 
 reading(Furi, Okuri) ->
-    io_lib:format(lists:flatten(Furi), Okuri).
+    try
+        io_lib:format(lists:flatten(Furi), Okuri)
+    catch
+        error:badarg ->
+            ensure_flattened(Furi)
+    end.
+
+ensure_flattened(Furi) ->
+    try
+        ensure_flattened(
+          lists:flatten(
+            io_lib:format(Furi, [""])))
+    catch
+        error:badarg ->
+            Furi
+    end.
 
 get_furi({<<"span">>, [{<<"class">>,<<"furigana">>}], Contents}) ->
+    %% well, shit
+    %% here's the example:
+    %% <span class="furigana">
+    %%   <span class="kanji-3-up kanji">しっぽ</span>
+    %%   <span></span>
+    %% </span>
+    %% <span class="text">
+    %%   尻尾
+    %% </span>
+    %% what do we have here? blank spans in furigana section without corresponding okurigana!
+    %% unacceptable (and causing errors!)
     lists:map(fun(C) ->
                       {<<"span">>, _, Text} = C,
                       case Text of
