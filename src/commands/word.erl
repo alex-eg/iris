@@ -45,7 +45,7 @@ extract_info(Dom) ->
       fun({TextE, FuriE, MeaningE}) ->
               Spelling = lists:flatten(get_kanji(TextE)),
               Reading = lists:flatten(reading(get_furi(FuriE),
-                                              (get_okuri(TextE)))),
+                                              get_okuri(TextE))),
               Meanings = lists:takewhile(
                            fun({tag, Tag}) ->
                                    not(string:equal(Tag, "Wikipedia definition")
