@@ -164,6 +164,7 @@ get_kanji({<<"span">>, [{<<"class">>,<<"text">>}], Contents}) ->
                       %%     知<span>り</span>合<span>い</span>
                       %% </span>
                       case Text of
+                          {<<"span">>, [], []} -> "";
                           {<<"span">>, [], [Okurigana]} -> convert(Okurigana);
                           Kanji -> convert(Kanji)
                       end
