@@ -67,7 +67,7 @@ extract_info(Dom) ->
                                         Meanings),
                                   MeaningListText
                               end),
-              io_lib:format("~s [~s] ~s", [Spelling, Reading, MeaningText])
+              io_lib:format("~n~s [~s] ~s", [Spelling, Reading, MeaningText])
       end,
       lists:zip3(lists:sublist(Text, MaxLen),
                  lists:sublist(Furi, MaxLen),
