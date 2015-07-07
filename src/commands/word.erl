@@ -7,22 +7,15 @@ run([], _) ->
     "What is the sound of one hand clapping?";
 run(Args, _) ->
     [{request_url, Base}] = jid_worker:get_config(denshi_jisho),
-    [Head|Tail] = Args,
-    QueryURL = make_request_url(Head, Tail, Base) ++ "%23words", % for #words, to tell jisho we are searching words
+    QueryURL = make_request_url(Args, Base) ++ "%23words", % for #words, to tell jisho we are searching words
     {{_, 200, _}, _, Response} = misc:httpc_request(get, {QueryURL, []}, [], []),
     Dom = mochiweb_html:parse(Response),
     %% 2 because why not
     lists:flatten(lists:sublist(extract_info(Dom), 2)).
 
-make_request_url("en", Tail, Base) ->
+make_request_url(Tail, Base) ->
     Query = create_query(Tail),
-    io_lib:format(Base, [Query, ""]);
-make_request_url("ja", Tail, Base) ->
-    Query = create_query(Tail),
-    io_lib:format(Base, [Query, ""]);
-make_request_url(Something, Tail, Base) -> % Defaulting to jp clause
-    make_request_url("ja", [Something|Tail], Base).
-
+    io_lib:format(Base, [Query]).
 
 create_query([]) ->
     "";
