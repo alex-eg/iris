@@ -49,14 +49,14 @@ extract_info(Dom) ->
               Meanings = lists:takewhile(
                            fun({tag, Tag}) ->
                                    not(string:equal(Tag, "Wikipedia definition")
-                                       or string:equal(Tag, "Other forms") 
+                                       or string:equal(Tag, "Other forms")
                                        or string:equal(Tag, "Notes"));
                               (_) -> true
                            end,
                            get_meanings(MeaningE)),
               MeaningText = lists:flatten(
                               begin
-                                  {_, MeaningListText} = 
+                                  {_, MeaningListText} =
                                       lists:foldl(
                                         fun({tag, Tag}, {_, Acc}) ->
                                                 {1, Acc ++ io_lib:format("~n(~s): ", [Tag])};
@@ -72,7 +72,7 @@ extract_info(Dom) ->
       lists:zip3(lists:sublist(Text, MaxLen),
                  lists:sublist(Furi, MaxLen),
                  lists:sublist(MeaningTags, MaxLen))).
-      
+
 
 get_meanings({<<"div">>, [{<<"class">>,<<"meanings-wrapper">>}], Contents}) ->
     lists:map(fun(C = {<<"div">>,
@@ -85,7 +85,7 @@ get_meanings({<<"div">>, [{<<"class">>,<<"meanings-wrapper">>}], Contents}) ->
                       {tag, convert(Tag)}
               end,
               Contents).
-                      
+
 collect_meanings(Contents) ->
     Meanings = mochiweb_xpath:execute("//span[@class='meaning-meaning']", Contents),
     lists:flatten(
@@ -144,7 +144,7 @@ get_furi({<<"span">>, [{<<"class">>,<<"furigana">>}], Contents}) ->
 
 get_okuri({<<"span">>, [{<<"class">>,<<"text">>}], Contents}) ->
     lists:foldr(fun(C, A) ->
-                        %% Good exapmle:
+                        %% Good example:
                         %% <span class="text">
                         %%     知<span>り</span>合<span>い</span>
                         %% </span>
@@ -155,11 +155,11 @@ get_okuri({<<"span">>, [{<<"class">>,<<"text">>}], Contents}) ->
 		end,
 		[],
 		Contents).
-    
+
 
 get_kanji({<<"span">>, [{<<"class">>,<<"text">>}], Contents}) ->
     lists:map(fun(Text) ->
-                      %% Good exapmle:
+                      %% Good example:
                       %% <span class="text">
                       %%     知<span>り</span>合<span>い</span>
                       %% </span>
