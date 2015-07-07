@@ -11,7 +11,13 @@ run(Args, _) ->
     {{_, 200, _}, _, Response} = misc:httpc_request(get, {QueryURL, []}, [], []),
     Dom = mochiweb_html:parse(Response),
     %% 2 because why not
-    lists:flatten(lists:sublist(extract_info(Dom), 2)).
+    Reply = string:strip(lists:flatten(lists:sublist(extract_info(Dom), 2)),
+                         right,
+                         $\n),
+    case string:equal(Reply, "") of
+        true ->"Nothing found";
+        false -> Reply
+    end.
 
 make_request_url(Tail, Base) ->
     Query = create_query(Tail),
