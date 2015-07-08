@@ -109,6 +109,8 @@ reading([], [], Acc) ->
     lists:reverse(Acc);
 reading(["~s"|T], [OH|OT], Acc) ->
     reading(T, OT, [io_lib:format("~s", [OH])|Acc]);
+reading(["~s"|T], [], Acc) ->
+    reading(T, [], [io_lib:format("~s", [""])|Acc]);
 reading([FuriH|FuriT], Okur, Acc) ->
     reading(FuriT, Okur, [FuriH|Acc]).
 
