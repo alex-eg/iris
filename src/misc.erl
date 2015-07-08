@@ -7,7 +7,7 @@ httpc_request(Method, Request, HTTPOptions, Options) ->
             Response;
         Any ->
             lager:error("Request failed: ~p", [Any]),
-	    Any
+            Any
     catch
         error:Exception ->
             lager:error("Exception ~p occcured!", [Exception])
