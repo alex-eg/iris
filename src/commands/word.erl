@@ -2,7 +2,7 @@
 -export([run/2]).
 -behaviour(iris_command).
 -alias("@word").
-
+-compile(export_all).
 run([], _) ->
     "What is the sound of one hand clapping?";
 run(Args, _) ->
@@ -48,8 +48,7 @@ extract_info(Dom) ->
                                               get_okuri(TextE))),
               Meanings = lists:takewhile(
                            fun({tag, Tag}) ->
-                                   not(string:equal(Tag, "Wikipedia definition")
-                                       or string:equal(Tag, "Other forms")
+                                   not(string:equal(Tag, "Other forms")
                                        or string:equal(Tag, "Notes"));
                               (_) -> true
                            end,
@@ -104,22 +103,14 @@ collect_meanings(Contents) ->
                 Meanings)).
 
 reading(Furi, Okuri) ->
-    try
-        io_lib:format(lists:flatten(Furi), Okuri)
-    catch
-        error:badarg ->
-            ensure_flattened(Furi)
-    end.
+    reading(Furi, Okuri, []).
 
-ensure_flattened(Furi) ->
-    try
-        ensure_flattened(
-          lists:flatten(
-            io_lib:format(Furi, [""])))
-    catch
-        error:badarg ->
-            Furi
-    end.
+reading([], [], Acc) ->
+    lists:reverse(Acc);
+reading(["~s"|T], [OH|OT], Acc) ->
+    reading(T, OT, [io_lib:format("~s", [OH])|Acc]);
+reading([FuriH|FuriT], Okur, Acc) ->
+    reading(FuriT, Okur, [FuriH|Acc]).
 
 get_furi({<<"span">>, [{<<"class">>,<<"furigana">>}], Contents}) ->
     %% well, shit
