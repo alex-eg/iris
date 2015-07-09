@@ -98,6 +98,20 @@ collect_meanings(Contents) ->
                                               MeaningText -> convert(MeaningText)
                                           end
                                   end,
+                                  Meaning);
+                   ({<<"span">>,
+                     [{<<"class">>,<<"meaning-abstract">>}],
+                     Meaning}) ->
+                        lists:map(fun (M) ->
+                                          case M of
+                                              {<<"span">>, _, _} ->
+                                                  no;
+                                              {<<"a">>,
+                                               [{<<"href">>, Link}],
+                                                _} -> convert(Link);
+                                              MeaningText -> convert(MeaningText)
+                                          end
+                                  end,
                                   Meaning)
                 end,
                 Meanings)).
