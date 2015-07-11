@@ -77,7 +77,6 @@ get_meanings({<<"div">>, [{<<"class">>,<<"meanings-wrapper">>}], Contents}) ->
     lists:map(fun(C = {<<"div">>,
                        [{<<"class">>,<<"meaning-wrapper">>}],
                        _}) ->
-                      io:format("cntns: ~p~n", [C]),
                       {meanings, collect_meanings(C)};
                  ({<<"div">>,
                    [{<<"class">>,<<"meaning-tags">>}],
@@ -91,9 +90,8 @@ collect_meanings({<<"div">>,
                    <<"meaning-wrapper">>}],
                   [{<<"div">>,
                     [{<<"class">>,
-                      <<"meaning-definition-section_divider">>}],
+                      <<"meaning-definition zero-padding">>}],
                    Contents}]}) ->
-    io:format("~p", [Contents]),
     Meanings = lists:filter(
                  fun({<<"span">>,
                       [{<<"class">>,<<"meaning-meaning">>}],
@@ -104,7 +102,6 @@ collect_meanings({<<"div">>,
                     (_) -> false
                  end,
                  Contents),
-    io:format("~p", [Meanings]),
     lists:flatten(
       lists:map(fun({<<"span">>,
                      [{<<"class">>,<<"meaning-meaning">>}],
@@ -120,17 +117,18 @@ collect_meanings({<<"div">>,
                    ({<<"span">>,
                      [{<<"class">>,<<"meaning-abstract">>}],
                      Meaning}) ->
-                        lists:map(fun (M) ->
-                                          case M of
-                                              {<<"span">>, _, _} ->
-                                                  no;
-                                              {<<"a">>,
-                                               [{<<"href">>, Link}],
-                                               _} -> convert(Link);
-                                              MeaningText -> convert(MeaningText)
-                                          end
-                                  end,
-                                  Meaning)
+                        ["~n"] ++
+                            lists:map(fun (M) ->
+                                              case M of
+                                                  {<<"span">>, _, _} ->
+                                                      no;
+                                                  {<<"a">>,
+                                                   [{<<"href">>, Link}],
+                                                   _} -> convert(Link);
+                                                  MeaningText -> convert(MeaningText)
+                                              end
+                                      end,
+                                      Meaning)
                 end,
                 Meanings)).
 
