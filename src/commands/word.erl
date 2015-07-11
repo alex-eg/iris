@@ -77,6 +77,7 @@ get_meanings({<<"div">>, [{<<"class">>,<<"meanings-wrapper">>}], Contents}) ->
     lists:map(fun(C = {<<"div">>,
                        [{<<"class">>,<<"meaning-wrapper">>}],
                        _}) ->
+                      io:format("cntns: ~p~n", [C]),
                       {meanings, collect_meanings(C)};
                  ({<<"div">>,
                    [{<<"class">>,<<"meaning-tags">>}],
@@ -85,8 +86,25 @@ get_meanings({<<"div">>, [{<<"class">>,<<"meanings-wrapper">>}], Contents}) ->
               end,
               Contents).
 
-collect_meanings(Contents) ->
-    Meanings = mochiweb_xpath:execute("//span[@class='meaning-meaning']", Contents),
+collect_meanings({<<"div">>,
+                  [{<<"class">>,
+                   <<"meaning-wrapper">>}],
+                  [{<<"div">>,
+                    [{<<"class">>,
+                      <<"meaning-definition-section_divider">>}],
+                   Contents}]}) ->
+    io:format("~p", [Contents]),
+    Meanings = lists:filter(
+                 fun({<<"span">>,
+                      [{<<"class">>,<<"meaning-meaning">>}],
+                      _}) -> true;
+                    ({<<"span">>,
+                      [{<<"class">>,<<"meaning-abstract">>}],
+                      _}) -> true;
+                    (_) -> false
+                 end,
+                 Contents),
+    io:format("~p", [Meanings]),
     lists:flatten(
       lists:map(fun({<<"span">>,
                      [{<<"class">>,<<"meaning-meaning">>}],
@@ -108,7 +126,7 @@ collect_meanings(Contents) ->
                                                   no;
                                               {<<"a">>,
                                                [{<<"href">>, Link}],
-                                                _} -> convert(Link);
+                                               _} -> convert(Link);
                                               MeaningText -> convert(MeaningText)
                                           end
                                   end,
