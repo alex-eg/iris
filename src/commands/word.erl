@@ -130,7 +130,9 @@ collect_meanings({<<"div">>,
                                       end,
                                       Meaning)
                 end,
-                Meanings)).
+                Meanings));
+collect_meanings(_) ->
+    wut.
 
 reading(Furi, Okuri) ->
     reading(Furi, Okuri, []).
