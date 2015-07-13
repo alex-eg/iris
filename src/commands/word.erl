@@ -117,7 +117,7 @@ collect_meanings({<<"div">>,
                    ({<<"span">>,
                      [{<<"class">>,<<"meaning-abstract">>}],
                      Meaning}) ->
-                        ["~n"] ++
+                        [$\n] ++
                             lists:map(fun (M) ->
                                               case M of
                                                   {<<"span">>, _, _} ->
