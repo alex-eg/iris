@@ -2,7 +2,7 @@
 -export([run/2]).
 -behaviour(iris_command).
 -alias("@word").
--compile(export_all).
+
 run([], _) ->
     "What is the sound of one hand clapping?";
 run(Args, _) ->
