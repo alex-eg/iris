@@ -86,12 +86,10 @@ get_meanings({<<"div">>, [{<<"class">>,<<"meanings-wrapper">>}], Contents}) ->
               Contents).
 
 collect_meanings({<<"div">>,
-                  [{<<"class">>,
-                   <<"meaning-wrapper">>}],
+                  [{<<"class">>, <<"meaning-wrapper">>}],
                   [{<<"div">>,
-                    [{<<"class">>,
-                      <<"meaning-definition zero-padding">>}],
-                   Contents}]}) ->
+                    [{<<"class">>, <<"meaning-definition zero-padding">>}],
+                   Contents}|_T]}) ->
     Meanings = lists:filter(
                  fun({<<"span">>,
                       [{<<"class">>,<<"meaning-meaning">>}],
@@ -132,7 +130,7 @@ collect_meanings({<<"div">>,
                 end,
                 Meanings));
 collect_meanings(_) ->
-    wut.
+    pass.
 
 reading(Furi, Okuri) ->
     reading(Furi, Okuri, []).
@@ -199,3 +197,14 @@ get_kanji({<<"span">>, [{<<"class">>,<<"text">>}], Contents}) ->
 convert(BitString) ->
     string:strip(string:strip(string:strip(binary_to_list(BitString)),
                  both, $\n)).
+
+tests() ->
+    lists:foreach(
+      fun(Q) ->
+              {ok, {{_,200,_}, _, Html}} = httpc:request(get, {"http://jisho.org/search/" ++ Q, []}, [], []),
+              Dom = mochiweb_html:parse(Html),
+              io:format(lists:flatten(lists:sublist(extract_info(Dom), 2)))
+      end,
+      ["kamome", "siri", "nyanko", "qweqwdqwd"]).
+    
+
