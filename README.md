@@ -58,12 +58,12 @@ All configuration is stored in priv/iris.config file. Default/example configarat
 Deps
 ----------------
 
-[jiffy](https://github.com/davisp/jiffy) --- JSON processing
+[jiffy](https://github.com/davisp/jiffy) —  processing
 
-[exmpp](http://processone.github.com/exmpp/) --- XMPP handling
+[exmpp](http://processone.github.com/exmpp/) — handling
 
 [erlang oauth](https://github.com/tim/erlang-oauth)
 
-[mochiweb_html](https://github.com/mochi/mochiweb) --- HTML parsing
+[mochiweb_html](https://github.com/mochi/mochiweb) — HTML parsing
 
-[lager](https://github.com/basho/lager) --- logging
+[lager](https://github.com/basho/lager) — logging
