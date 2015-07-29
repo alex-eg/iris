@@ -58,9 +58,9 @@ All configuration is stored in priv/iris.config file. Default/example configarat
 Deps
 ----------------
 
-[jiffy](https://github.com/davisp/jiffy) —  processing
+[jiffy](https://github.com/davisp/jiffy) — JSON  processing
 
-[exmpp](http://processone.github.com/exmpp/) — handling
+[exmpp](http://processone.github.com/exmpp/) — XMPP handling
 
 [erlang oauth](https://github.com/tim/erlang-oauth)
 
