@@ -55,15 +55,15 @@ Configuration
 
 All configuration is stored in priv/iris.config file. Default/example configaration file is provided for your consideration: [default.iris.config](https://github.com/taptap/iris/blob/master/priv/default.iris.config), which is (hopefully) pretty self-explanatory.
 
-Deps and credits
+Deps
 ----------------
 
-JSON processing by [jiffy](https://github.com/davisp/jiffy)
+[jiffy](https://github.com/davisp/jiffy) --- JSON processing
 
-XMPP handling by [excellent Process One's library](http://processone.github.com/exmpp/)
+[exmpp](http://processone.github.com/exmpp/) --- XMPP handling
 
-OAuth protocol library by [erlang oauth](https://github.com/tim/erlang-oauth)
+[erlang oauth](https://github.com/tim/erlang-oauth)
 
-HTML parsing by [mochiweb html parser](https://github.com/mochi/mochiweb)
+[mochiweb_html](https://github.com/mochi/mochiweb) --- HTML parsing
 
-Logging by [lager](https://github.com/basho/lager)
+[lager](https://github.com/basho/lager) --- logging
