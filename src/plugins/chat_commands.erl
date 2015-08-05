@@ -1,7 +1,7 @@
 -module(chat_commands).
 -behaviour(iris_plugin).
 
--export([start/3, process_message/2]).
+-export([start/3, process_message/2, stop/1]).
 
 start(_Supervisor, WorkerConfig, From) ->
     ChatCommandNames = config:get(commands, WorkerConfig),
@@ -44,7 +44,7 @@ check_module(M) ->
 
 process_message(Message, Config) ->
     Type = message:type(Message),
-    case Type of 
+    case Type of
         chat ->
             process_chat(Message, Config);
         groupchat ->
@@ -124,4 +124,5 @@ module_has_alias(Module) ->
             true
     end.
 
-
+stop(_From) ->
+    ok.
