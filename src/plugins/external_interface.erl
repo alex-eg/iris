@@ -1,7 +1,7 @@
 -module(external_interface).
 -behavior(gen_server).
 -behavior(iris_plugin).
--export([start/3, process_message/2]).
+-export([start/3, process_message/2, stop/1]).
 -export([start_link/2]).
 -export([accept_loop/4]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
@@ -86,4 +86,7 @@ loop(Socket, Subscriber, Recepient) ->
     end.
 
 process_message(_Msg, _Cfg) ->
+    ok.
+
+stop(_From) ->
     ok.
