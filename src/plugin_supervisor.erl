@@ -19,6 +19,6 @@ start_plugin_process(Supervisor, Plugin, Config, Worker) ->
                                         {Plugin,
                                          {Plugin, start_link, [Config, Worker]},
                                          transient,
-                                         brutal_kill,
+                                         3000,
                                          worker,
                                          [Plugin]}).

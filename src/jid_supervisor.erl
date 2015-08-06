@@ -11,15 +11,15 @@ init([Config, WorkerName]) ->
     {ok, {
        {rest_for_one, 1, 10},
        [{WorkerName,
-        {jid_worker, start_link, [Config, WorkerName, self()]},
-        transient,
-        brutal_kill,
-        worker,
-        [jid_worker]},
+         {jid_worker, start_link, [Config, WorkerName, self()]},
+         transient,
+         2000,
+         worker,
+         [jid_worker]},
         {list_to_atom(atom_to_list(WorkerName) ++ "_plugin_supervisor"),
          {plugin_supervisor, start_link, []},
          transient,
-         brutal_kill,
+         3000,
          supervisor,
          [plugin_supervisor]}]
       }}.
