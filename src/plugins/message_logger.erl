@@ -7,7 +7,7 @@
         "<!DOCTYPE html>~n"
         "<html>~n"
         "<head>~n"
-        "<title>Log of ~s with ~s on ~s-~s~-s</title>~n" % bot jid, chat name, date
+        "<title>Log of ~s with ~s on ~p-~p-~p</title>~n" % bot jid, chat name, date
         "</head>~n"
         "<body>~n"
        ).
