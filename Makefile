@@ -22,10 +22,10 @@ commands:
 
 debug: compile
 	cd ebin
-	erl -noshell -pa ebin deps/*/ebin -config priv/iris.config -s $(NAME)
+	erl -name $(NAME) -noshell -pa ebin deps/*/ebin -config priv/iris.config -s $(NAME)
 
 debug_sasl: all
 	cd ebin
-	erl -pa ebin deps/*/ebin -boot start_sasl -config priv/iris.config -s $(NAME)
+	erl -name $(NAME) -pa ebin deps/*/ebin -boot start_sasl -config priv/iris.config -s $(NAME)
 
 .PHONY: clean deps compile
