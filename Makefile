@@ -30,6 +30,6 @@ debug: compile
 
 debug_sasl: all
 	cd ebin
-	erl -name $(NAME) -pa ebin deps/*/ebin -boot start_sasl -config priv/iris.config -s $(NAME)
+	erl -sname $(NAME) -pa ebin deps/*/ebin -boot start_sasl -config priv/iris.config -s $(NAME)
 
 .PHONY: clean deps compile
