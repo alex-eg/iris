@@ -29,7 +29,7 @@
         "</html>~n"
        ).
 
-start(_Supervisor, WorkerConfig, From) ->
+start(_Supervisor, _WorkerConfig, From) ->
 
     Config = jid_worker:get_config(message_logger),
     AllLogDir = filename:absname(config:get(dir, Config)),
@@ -48,7 +48,7 @@ process_message(Message, Config) ->
             save_other_message(Message, Config)
     end.
 
-save_chat_message(Message, Config) ->
+save_chat_message(Message, _Config) ->
     From = message:from(Message),
     Body = message:body(Message),
     OpenedFiles = jid_worker:get_config(message_logger_opened_files),
