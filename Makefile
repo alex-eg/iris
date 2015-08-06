@@ -1,7 +1,7 @@
 NAME = iris
 REBAR = $(shell command -v rebar || echo "./rebar")
 
-all: clean compile
+all: clean compile control_tool
 
 clean:
 	$(REBAR) clean
@@ -9,6 +9,10 @@ clean:
 compile:
 	@echo $(REBAR)
 	$(REBAR) compile
+
+control_tool:
+	erlc -I ./include -o ./iris_ctl ./src/control_tool/control_tool.erl
+	sed -i '1s/^/#!\/usr\/bin\/env escript\n%%! -sname iris_ctl\n/' ./iris_ctl
 
 deps:
 	$(REBAR) get-deps
