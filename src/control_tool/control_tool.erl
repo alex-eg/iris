@@ -4,13 +4,12 @@
 main([stop]) ->
     net_adm:ping(iris@localhost),
     rpc:call(iris@localhost, application, stop, [iris]),
-    erlang:halt().
-
+    erlang:halt();
 main(_) ->
     usage().
 
 usage() ->
-    io:format("usage: iris-clt [option] <command>~n"
+    io:format("usage: control_tool [option] <command>~n"
               "~n"
               "Commands:~n"
               "~n"
