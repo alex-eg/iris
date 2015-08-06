@@ -11,8 +11,9 @@ compile:
 	$(REBAR) compile
 
 control_tool:
-	erlc -I ./include -o ./iris_ctl ./src/control_tool/control_tool.erl
-	sed -i '1s/^/#!\/usr\/bin\/env escript\n%%! -sname iris_ctl\n/' ./iris_ctl
+	erlc -I ./include -o ./ ./src/control_tool/control_tool.erl
+	sed '1s/^/#!\/usr\/bin\/env escript\n%%! -sname iris_ctl\n/' ./control_tool.beam > ./control_tool
+	chmod +x ./control_tool
 
 deps:
 	$(REBAR) get-deps
