@@ -1,7 +1,7 @@
 -module(message_logger).
 -behaviour(iris_plugin).
 
--export([start/3, process_message/2]).
+-export([start/3, process_message/2, stop/1]).
 
 -define(HEADER,
         "<!DOCTYPE html>~n"
