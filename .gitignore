@@ -4,3 +4,5 @@ deps
 *.dump
 .rebar
 log
+logs
+control_tool
