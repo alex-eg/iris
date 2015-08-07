@@ -1,7 +1,7 @@
 -module(control_tool).
 -export([main/1]).
 
-main([stop]) ->
+main(["stop"]) ->
     net_adm:ping(iris@localhost),
     rpc:call(iris@localhost, application, stop, [iris]),
     erlang:halt();
