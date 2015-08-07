@@ -29,6 +29,7 @@ start_link(Config, Name, Supervisor) ->
 % gen_server callbacks
 
 init({Config, WorkerName, Supervisor}) ->
+    process_flag(trap_exit, true),
     ConfigEts = ets:new(config, [named_table, set]),
     lager:debug("initial config: ~p", [Config]),
     lists:foreach(fun(Entry) ->
@@ -130,16 +131,22 @@ handle_info(#received_packet{packet_type = message, raw_packet = Packet}, State)
 handle_info(#received_packet{packet_type = _PacketType, raw_packet = _Packet}, State) ->
     %% lager:debug("Resieved XMPP packet~ntype: ~p~npacket: ~p", [PacketType, Packet]),
     {noreply, State};
-handle_info(Msg, State) -> 
+handle_info(Msg, State) ->
     lager:info("Recieved unknown message: '~p'", [Msg]),
     {noreply, State}.
 
-terminate(_Reason, State) ->
+terminate(Reason, State) ->
+    Config = State#state.config_ets,
+    Plugins = config:get(plugins, Config),
+    lists:foreach(fun(Plugin) ->
+                          %% Hook point #3
+                          lager:debug("Stopping plugin ~p", [Plugin]),
+                          Plugin:stop(self())
+                  end,
+                  Plugins),
     Session = State#state.session,
     exmpp_session:stop(Session),
-    %% lager:info("worker ~p with pid ~p terminated.~nReason: ~p",
-    %%           [State#state.name, self(), Reason]),
-    %% gen_server:cast(core, {terminated, self(), Reason}),
+    gen_server:cast(core, {terminated, self(), Reason}),
     ok.
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
