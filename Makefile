@@ -5,6 +5,7 @@ all: clean compile control_tool
 
 clean:
 	$(REBAR) clean
+	rm -f ./control_tool
 
 compile:
 	@echo $(REBAR)
