@@ -20,6 +20,7 @@ start(normal, _StartArgs) ->
     supervisor:start_link({local, iris_main_sup}, ?MODULE, []).
 
 stop(_State) ->
+    lager:info("---------=========== Stopping ===========----------"),
     exit(main_sup, shutdown),
     ok.
 
