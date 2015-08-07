@@ -33,7 +33,7 @@ init(State) ->
 handle_call({get_config, Key}, _From, State) ->
     Reply = config:get(Key, State#state.config_ets),
     {reply, Reply, State};
-handle_call(Any, _Caller, State) -> 
+handle_call(Any, _Caller, State) ->
     lager:info("Recieved unknown request: ~p", [Any]),
     {noreply, State}.
 
@@ -49,7 +49,7 @@ handle_cast({started_plugins, From, Name}, State) ->
 handle_cast({terminated, From, Reason}, State) ->
     WorkerEts = State#state.worker_ets,
     [{_, Name}] = ets:lookup(WorkerEts, From),
-    lager:info("Worker ~p for jid ~p terminated.~nReason: ~p", [Name, From, Reason]),
+    lager:info("Worker ~p for jid ~p terminated. Reason: ~p", [Name, From, Reason]),
     ets:delete_object(WorkerEts, {From, Name}),
     {noreply, State};
 handle_cast(start_workers, State) ->
