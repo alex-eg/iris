@@ -4,6 +4,7 @@
 main(["stop"]) ->
     net_adm:ping(iris@localhost),
     rpc:call(iris@localhost, application, stop, [iris]),
+    rpc:call(iris@localhost, erlang, halt, []),
     erlang:halt();
 main(_) ->
     usage().
