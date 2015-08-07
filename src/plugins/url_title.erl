@@ -1,14 +1,14 @@
 -module(url_title).
 -behaviour(iris_plugin).
 
--export([start/3, process_message/2]).
+-export([start/3, process_message/2, stop/1]).
 
 start(_Supervisor, _WorkerConfig, _From) ->
     ok.
 
 process_message(Message, Config) ->
     Type = message:type(Message),
-    case Type of 
+    case Type of
         groupchat ->
             case message:is_history(Message) of
                 false -> process_groupchat(Message, Config);
@@ -19,6 +19,9 @@ process_message(Message, Config) ->
         _Other ->
             lager:error("got unknown message type: ~s", [Type])
     end.
+
+stop(_From) ->
+    ok.
 
 process_groupchat(Message, Config) ->
     FromRoom = message:from_room(Message),
@@ -74,7 +77,7 @@ process_response2(Message, {{_, 200, _}, _, Page}) ->
                     From = exmpp_xml:get_attribute(message:raw(Message), <<"from">>, undefined),
                     [RoomJid|_] = string:tokens(misc:format_str("~s",[From]),"/"),
                     jid_worker:reply("Page title: " ++ Title, RoomJid);
-                Any -> 
+                Any ->
                     lager:error("[~s] got title tag: ~s", [?MODULE, Any]),
                     ok
             end;

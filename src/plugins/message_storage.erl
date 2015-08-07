@@ -2,7 +2,7 @@
 -behaviour(iris_plugin).
 -behaviour(gen_server).
 
--export([start/3, process_message/2]).
+-export([start/3, process_message/2, stop/1]).
 -export([start_link/2]).
 -export([init/1, code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 -export([get_message/2]).
@@ -117,3 +117,6 @@ get_message(From, Num) ->
 get_last_message(Room) ->
     StorageServer = jid_worker:get_config(self(), message_storage_server),
     gen_server:call(StorageServer, {get_last_message, Room}).
+
+stop(_From) ->
+    ok.
