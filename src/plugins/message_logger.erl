@@ -50,10 +50,34 @@ process_message(Message, Config) ->
 
 save_chat_message(Message, Config) ->
     From = message:from(Message),
-    Body = message:body(Message),
     OpenedFiles =  jid_worker:get_config(self(), message_logger_opened_files),
-    lager:debug("Saving message ~s from ~s", [Body, From]),
-    lager:debug("Opened files: ~p", [OpenedFiles]),
+    File = get_file(From, OpenedFiles, Config),
+
+    Time = current_time(),
+    Body = message:body(Message),
+    Entry = lists:flatten(io_lib:format(?FORMAT_CHAT, [Time, From, Body])),
+
+    ok = file:write(File, list_to_binary(Entry)).
+
+save_groupchat_message(Message, Config) ->
+    Room = message:from_room(Message),
+    OpenedFiles = jid_worker:get_config(self(), message_logger_opened_files),
+    File = get_file(Room, OpenedFiles, Config),
+
+    Time = current_time(),
+    Nick = message:nick(Message),
+    Body = message:body(Message),
+    Entry = lists:flatten(io_lib:format(?FORMAT_GROUPCHAT, [Time, Nick, Body])),
+
+    ok = file:write(File, list_to_binary(Entry)).
+
+current_time() ->
+    {_, {H, Min, S}} = calendar:now_to_datetime(erlang:timestamp()),
+    lists:flatten(io_lib:format("~p:~p:~p", [H, Min, S])).
+
+get_file(From, OpenedFiles, Config) ->
+    %% If file is not already opened - open file and insert it
+    %% into jid_worker ets
     case proplists:lookup(From, OpenedFiles) of
         none ->
             BaseDir = jid_worker:get_config(self(), message_logger_dir),
@@ -64,56 +88,16 @@ save_chat_message(Message, Config) ->
             PathToFile = filename:join(ChatDir, "./" ++ Filename),
             lager:debug("Opening ~s for writing", [PathToFile]),
             filelib:ensure_dir(PathToFile),
-
             {ok, File} = file:open(PathToFile, [append]),
 
             Jid = jid_worker:get_config(self(), jid),
             Header = lists:flatten(io_lib:format(?HEADER, [Jid, From, D, M, Y])),
             file:write(File, list_to_binary(Header)),
-            jid_worker:store_config(self(), {message_logger_opened_files, [{From, File}|OpenedFiles]});
-
-%            delete_footer(File);
-        {_, File} -> ok
-    end,
-
-    {_, {H, Min, S}} = calendar:now_to_datetime(erlang:timestamp()),
-    Body = message:body(Message),
-    Time = lists:flatten(io_lib:format("~p:~p:~p", [H, Min, S])),
-    Entry = lists:flatten(io_lib:format(?FORMAT_CHAT, [Time, From, Body])),
-
-    ok = file:write(File, list_to_binary(Entry)).
-
-save_groupchat_message(Message, Config) ->
-    Room = message:from_room(Message),
-    Nick = message:nick(Message),
-    Body = message:body(Message),
-    OpenedFiles = jid_worker:get_config(self(), message_logger_opened_files),
-    case proplists:lookup(Room, OpenedFiles) of
-        none ->
-            BaseDir = jid_worker:get_config(self(), message_logger_dir),
-            ChatDir = filename:join(BaseDir, "./" ++ Room),
-            filelib:ensure_dir(ChatDir),
-            {{Y, M, D}, _} = calendar:now_to_datetime(erlang:timestamp()),
-            Filename = lists:flatten(io_lib:format("~p-~p-~p.html", [Y, M, D])),
-            PathToFile = filename:join(ChatDir, "./" ++ Filename),
-            lager:debug("Opening ~s for writing", [PathToFile]),
-            filelib:ensure_dir(PathToFile),
-            {ok, File} = file:open(PathToFile, [append]),
-
-            Jid = jid_worker:get_config(self(), jid),
-            Header = lists:flatten(io_lib:format(?HEADER, [Jid, Room, D, M, Y])),
-            file:write(File, list_to_binary(Header)),
             delete_footer(File),
-            ets:insert(Config, {message_logger_opened_files, [{Room, File}|OpenedFiles]});
-        {_, File} -> ok
-    end,
-
-    {_, {H, Min, S}} = calendar:now_to_datetime(erlang:timestamp()),
-    Body = message:body(Message),
-    Time = lists:flatten(io_lib:format("~p:~p:~p", [H, Min, S])),
-    Entry = lists:flatten(io_lib:format(?FORMAT_GROUPCHAT, [Time, Nick, Body])),
-
-    ok = file:write(File, list_to_binary(Entry)).
+            ets:insert(Config, {message_logger_opened_files, [{From, File}|OpenedFiles]}),
+            File;
+        {_, File} -> File
+    end.
 
 save_other_message(_Message, _Config) ->
     ok.
