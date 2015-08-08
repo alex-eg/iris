@@ -86,14 +86,22 @@ get_file(From, OpenedFiles, Config) ->
             {{Y, M, D}, _} = calendar:now_to_datetime(erlang:timestamp()),
             Filename = lists:flatten(io_lib:format("~p-~p-~p.html", [Y, M, D])),
             PathToFile = filename:join(ChatDir, "./" ++ Filename),
-            lager:debug("Opening ~s for writing", [PathToFile]),
-            filelib:ensure_dir(PathToFile),
-            {ok, File} = file:open(PathToFile, [append]),
 
-            Jid = jid_worker:get_config(self(), jid),
-            Header = lists:flatten(io_lib:format(?HEADER, [Jid, From, D, M, Y])),
-            file:write(File, list_to_binary(Header)),
-            delete_footer(File),
+            lager:debug("Opening ~s for writing", [PathToFile]),
+
+            case file:read_fine_info(PathToFile) of
+                {error, enoent} ->
+                    %% File is not created, creating
+                    filelib:ensure_dir(PathToFile),
+                    {ok, File} = file:open(PathToFile, [write]),
+                    Jid = jid_worker:get_config(self(), jid),
+                    Header = lists:flatten(io_lib:format(?HEADER, [Jid, From, D, M, Y])),
+                    file:write(File, list_to_binary(Header));
+                _ ->
+                    %% File already present
+                    {ok, File} = file:open(PathToFile, [append]),
+                    delete_footer(File)
+            end,
             ets:insert(Config, {message_logger_opened_files, [{From, File}|OpenedFiles]}),
             File;
         {_, File} -> File
