@@ -89,7 +89,7 @@ get_file(From, OpenedFiles, Config) ->
 
             lager:debug("Opening ~s for writing", [PathToFile]),
 
-            case file:read_fine_info(PathToFile) of
+            case file:read_file_info(PathToFile) of
                 {error, enoent} ->
                     %% File is not created, creating
                     filelib:ensure_dir(PathToFile),
