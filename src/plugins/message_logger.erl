@@ -112,7 +112,8 @@ save_other_message(_Message, _Config) ->
 
 stop(From) ->
     OpenedFiles = jid_worker:get_config(From, message_logger_opened_files),
-    lists:foreach(fun({_, F}) ->
+    lists:foreach(fun({From, F}) ->
+                          lager:debug("Closing file for ~p", [From]),
                           file:write(F, lists:flatten(io_lib:format(?FOOTER, []))),
                           file:sync(F),
                           file:close(F)
