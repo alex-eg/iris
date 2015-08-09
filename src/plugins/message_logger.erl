@@ -7,6 +7,7 @@
         "<!DOCTYPE html>~n"
         "<html>~n"
         "<head>~n"
+        "<meta charset='UTF-8'>"
         "<title>Log of ~s with ~s on ~p-~p-~p</title>~n" % bot jid, chat name, date
         "</head>~n"
         "<body>~n"
