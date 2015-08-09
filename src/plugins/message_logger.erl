@@ -14,15 +14,19 @@
        ).
 
 -define(FORMAT_CHAT,
-        "<div class='time'>~s</div>"
-        "<div class='chat-nick'>~s</div>"
-        "<div class='message'>~s</div>~n"
+        "<div class='chat-message'>~n"
+        "<span class='time'>~s</span>"
+        "<span class='chat-nick'>~s</span>"
+        "<span class='message'>~s</span>~n"
+        "</div>~n"
        ).
 
 -define(FORMAT_GROUPCHAT,
-        "<div class='time'>~s</div>"
-        "<div class='groupchat-nick'>~s</div>"
-        "<div class='message'>~s</div>~n"
+        "<div class='groupchat-message'>~n"
+        "<span class='time'>~s</span>"
+        "<span class='groupchat-nick'>~s</span>"
+        "<span class='message'>~s</span>~n"
+        "</div>~n"
         ).
 
 -define(FOOTER,
