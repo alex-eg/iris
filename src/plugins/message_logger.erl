@@ -59,8 +59,8 @@ save_chat_message(Message, Config) ->
     File = get_file(From, OpenedFiles, Config),
 
     Time = current_time(),
-    Body = message:body(Message),
-    Entry = lists:flatten(io_lib:format(?FORMAT_CHAT, [Time, From, Body])),
+    Body = xmerl_lib:export_text(message:body(Message)),
+    Entry = lists:flatten(io_lib:format(?FORMAT_CHAT, [Time, xmerl_lib:export_text(From), Body])),
 
     ok = file:write(File, list_to_binary(Entry)).
 
@@ -70,8 +70,8 @@ save_groupchat_message(Message, Config) ->
     File = get_file(Room, OpenedFiles, Config),
 
     Time = current_time(),
-    Nick = message:nick(Message),
-    Body = message:body(Message),
+    Nick = xmerl_lib:export_text(message:nick(Message)),
+    Body = xmerl_lib:export_text(message:body(Message)),
     Entry = lists:flatten(io_lib:format(?FORMAT_GROUPCHAT, [Time, Nick, Body])),
 
     ok = file:write(File, list_to_binary(Entry)).
