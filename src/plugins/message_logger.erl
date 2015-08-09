@@ -100,7 +100,7 @@ get_file(From, OpenedFiles, Config) ->
                 _ ->
                     %% File already present
                     {ok, File} = file:open(PathToFile, [append]),
-                    delete_footer(File)
+                    locate_footer(File)
             end,
             ets:insert(Config, {message_logger_opened_files, [{From, File}|OpenedFiles]}),
             File;
@@ -120,11 +120,8 @@ stop(From) ->
                   end,
                   OpenedFiles).
 
-delete_footer(File) ->
-    ok.
-    %% case file:read_line(File) of
-    %%     eof ->
-    %%         ok;
-    %%     {ok, _Data} ->
-    %%         ok
-    %% end.
+locate_footer(File) ->
+    %% Set location to two lines before end of file
+    %% since we don't want to append new messages after
+    %% </body> and </html> tags
+    {ok, _} = file:position(File, {eof, erlang:byte_size(unicode:characters_to_binary(?FOOTER))}).
