@@ -9,6 +9,7 @@ clean:
 
 compile:
 	@echo $(REBAR)
+	$(REBAR) get-deps
 	$(REBAR) compile
 
 control_tool:
